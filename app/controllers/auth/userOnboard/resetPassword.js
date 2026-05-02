@@ -1,6 +1,7 @@
 const { matchedData } = require("express-validator");
 const User = require("../../../models/user");
 const bcrypt = require("bcryptjs");
+const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { logger } = require("../../../../winston");
 
@@ -69,7 +70,15 @@ const resetPassword = async (req, res) => {
               message: message,
             });
             logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
-        
+
+            sendOtpEmail({
+              checkedEmail: user.email,
+              username: user.name || user.username,
+              temp: "password_changed",
+              subject: "Password Changed Successfully"
+            }).catch((err) => {
+              console.error("Failed to send password changed email:", err.message);
+            });
 
         return res.status(200).json({
             success: true,

@@ -132,7 +132,6 @@ app.use("/api/auth", require("./app/routes/googleAuth"));
 //  STATIC FILES
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
 app.use("/api", router);
 app.use("/api/binance", binanceRoute);
 

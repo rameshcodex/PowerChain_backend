@@ -6,7 +6,7 @@ const verifyOtp = async (req, res) => {
   try {
     req = matchedData(req);
     const { email, otp } = req;
-    const unverifiedUser = await UnVerifiedUser.findOne({ email });
+    const unverifiedUser = await UnVerifiedUser.findOne({ email }).select('+password');
 
     if (!unverifiedUser) {
       return res.status(404).json({
@@ -48,9 +48,11 @@ const verifyOtp = async (req, res) => {
       phone: unverifiedUser.phone,
       email: unverifiedUser.email,
       password: unverifiedUser.password,
+      passwordSet: unverifiedUser.passwordSet,
       isVerified: true,
       otp: unverifiedUser.otp,
-      otpExpires: unverifiedUser.otpExpires
+      otpExpires: unverifiedUser.otpExpires,
+      kycStatus: unverifiedUser.kycStatus
     });
 
     await UnVerifiedUser.findOneAndDelete({ email });

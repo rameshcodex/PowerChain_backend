@@ -5,6 +5,6 @@ const index = require({
     verifyOtpForLoggedUsersValidator: "./verifyOtpForLoggedUsersValidator",
     loginValidator: "./loginValidator",
     resetPasswordValidator: "./resetPasswordValidator",   
-    })
+    resendotpValidator: "./resendotpValidator"   })
 
-module.exports = index
+module.exports = index  

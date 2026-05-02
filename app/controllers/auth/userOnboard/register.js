@@ -26,7 +26,7 @@ const verifyToken = async (token) => {
 const register = async (req, res) => {
     try {
         req = matchedData(req);
-        const { name, email, password, phone, username, captcha } = req;
+        const { name, email, password, phone, username, captcha,kycStatus } = req;
 
         // 🔐 CAPTCHA CHECK (same as login)
         if (!captcha) {
@@ -114,7 +114,8 @@ const register = async (req, res) => {
             password: hashedPassword,
             otp,
             otpExpires: Date.now() + 5 * 60 * 1000,
-            isVerified: false
+            isVerified: false,
+            kycStatus: kycStatus || 'Not Initiated'
         });
 
         // await sendOtpEmail({

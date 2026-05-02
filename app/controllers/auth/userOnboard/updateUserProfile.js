@@ -4,7 +4,7 @@ const updateUserProfile = async (req, res) => {
     try {
 
         const userId = req.user._id;
-        const { email, phone, username, name } = req.body;
+        const { email, phone, username, name, country, telegramId, telegramUsername } = req.body;
         // const { profileImage } = req.files;
 
         const user = await User.findById(userId);
@@ -34,7 +34,10 @@ const updateUserProfile = async (req, res) => {
                     email,
                     username,
                     phone,
-                    name
+                    name,
+                    country,
+                    telegramId,
+                    telegramUsername
                 },
             },
             { new: true }

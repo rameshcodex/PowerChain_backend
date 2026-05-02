@@ -25,7 +25,7 @@ const createUploader = ({
 
     filename: (req, file, cb) => {
       const ext = file.mimetype.split("/")[1] || "png";
-      const userId = req.user?.id || "guest";
+      const userId = req.user?._id || "guest";
 
       cb(
         null,

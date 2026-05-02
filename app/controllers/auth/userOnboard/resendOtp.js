@@ -3,14 +3,56 @@ const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 
+
+const verifyToken = async (token) => {
+    try {
+        const response = await axios.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            null,
+            {
+                params: {
+                    secret: process.env.RECAPTCHA_SECRET_KEY,
+                    response: token,
+                },
+            }
+        );
+        return response.data.success === true;
+    } catch {
+        return false;
+    }
+};
+
 const resendOtp = async (req, res) => {
+  console.log("FSDFDSFEWRew")
   try {
 
-    const { email } = req.body;
+    const { email, captcha } = req.body;
+
+    console.log("Received resend OTP request:", req.body);
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
+
+
+
+       if (!captcha) {
+            return res.status(400).json({
+                success: false,
+                message: "Robot verification required",
+            });
+        }
+
+        const isHuman = await verifyToken(captcha);
+
+        if (!isHuman) {
+            return res.status(403).json({
+                success: false,
+                message: "Captcha verification failed",
+            });
+        }
+
+        const forCheck = email.trim()
 
     const user = await unVerifiedUsers.findOne({ email });
     const user1 = await User.findOne({ email });

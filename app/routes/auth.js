@@ -21,6 +21,12 @@ const { setUpTwoFA, verifyTwoFA, disableTwoFA, loginTwoFAVerify } = require("../
 const { getAllTickets } = require("../controllers/admin/Ticket/getAllTickets");
 const { isAdmin, isSubAdmin } = require("../middleware/auth/isAdmin");
 
+
+
+// KYC
+
+
+
 // validators
 const { forgetPasswordValidator } = require("../controllers/auth/validator/forgetPasswordValidator");
 const { verifyOtpForLoggedUsersValidator } = require("../controllers/auth/validator/verifyOtpForLoggedUsersValidator");
@@ -73,6 +79,7 @@ const { transferWallet, getP2PWallet, getP2PWalletById, getTransferHistory } = r
 const { createTradeOrder, uploadTradeImage, getTradeOrder, confirmPayment, releaseAssets, cancelTradeOrder, sendP2PMessage } = require("../controllers/auth/p2p/p2pPostOrder.js");
 const { getNotifications, markAsRead, getUnreadCount, clearNotifications, markAllAsRead } = require("../controllers/auth/notification/notification");
 const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = require("../controllers/auth/spot/binanceMarketData.js");
+const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
 
 
 // ...
@@ -95,7 +102,7 @@ router.post(
 
 router.post("/verify-otp", verifyOtpValidator, verifyOtp);
 
-router.post("/resend-otp", resendOtp);
+router.post("/resend-otp",resendotpValidator, resendOtp);
 
 router.post("/reset-password", resetPasswordValidator, resetPassword)
 
@@ -114,7 +121,6 @@ router.patch("/update-profile", requireAuth, updateUserProfileValidator, updateU
 router.patch(
     "/update-profile-image",
     requireAuth,
-    uploadAvatar.single("avatar"),
     updateProfileImage
 );
 

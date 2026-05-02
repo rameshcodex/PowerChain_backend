@@ -8,7 +8,10 @@ const adminSchema = new mongoose.Schema({
     // otpExpires: Date,
     role: { type: String, default: "admin" }
 
-})
+},
+{
+    timestamps: true,
+  })
 
 const Admin = mongoose.model('Admin', adminSchema);
 
