@@ -1,0 +1,33 @@
+const { check } = require('express-validator');
+// const { isNumeric, isLength } = require('validator');
+const {handleValidation} = require('../../middleware/utiles/handleValidation');
+
+const adminRegisterValidator = [
+  check('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Name is required'),
+
+  check('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email'),
+
+  check('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+
+  (req, res, next) => {
+    handleValidation(req, res, next)
+  }
+];
+
+module.exports = { adminRegisterValidator };
+
+
+
+

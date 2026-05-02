@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Chain</title>
+    <style>
+        .imperial-whole{
+           box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;    
+           border-radius: 12px;
+    }
+        .ejs-otp{
+            display: flex;
+            justify-content: center
+        }
+       .ejs-otp .otp-contain {
+        /* border: 1px solid #bcfd0bff; */
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+        padding: 10px;
+        border-radius: 5px;
+        color: #bcfd0bff;
+        font-weight: 600;
+        font-size: 25px;
+       }
+       .heading{
+        font-size: 25px;
+        text-align: center;
+        font-weight: 600;
+       }
+       .paraheading{
+        font-size: 15px;
+        text-align: left;
+        font-weight: 600;
+       }
+       .para{
+        font-size: 15px;
+        text-align: left;
+        font-weight: 500;
+       }
+       @media (max-width:776.98px) {
+         .main-area{
+           width: 90% !important;
+       }
+       }
+      
+    </style>
+</head>
+<body
+style="width:50%;margin: auto; display: flex;justify-content: center;align-items: center;font-family:Roboto,Helvetica,Arial,sans-serif;margin-top: 20px;" class="main-area">
+      <div class="imperial-whole">
+          <div class="imperial-cnt" style="padding: 0 16px 0;">
+            <p class="heading">Welcome to Power Chain
+            </p>
+            <p class="paraheading">Hi, <%= username %>
+            </p>
+            <p class="para">Verify Your Email Using This Otp
+            </p>
+            <p class="para">Your OTP
+            </p>
+        </div>
+        <div  class="ejs-otp">
+               <div class="otp-contain"  >
+                <%= otp %>
+               </div>
+        </div>
+        <div class=""  style="padding: 0 16px 0;">
+             <p class="para">Kindly protect
+                your password and email ID used for registration for safety purpose
+            </p>
+  <p class="para">Regrads</p>
+            <p class="para">Team Power Chain</p>
+        </div>
+
+        <div class="" style="padding: 0 16px 0; border-top: 1px solid #ccc;">
+              <p class="para" style="text-align: center;">Copyright © Power Chain, 2026-2027. All Rights Reserved</p>
+        </div>
+</div>
+    
+</body>
+</html>

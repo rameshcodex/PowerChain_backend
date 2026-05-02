@@ -1,0 +1,88 @@
+const { matchedData } = require("express-validator");
+const User = require("../../../models/user");
+const bcrypt = require("bcryptjs");
+const { sendNotification } = require("../../../utils/notificationHelper");
+const { logger } = require("../../../../winston");
+
+
+const verifyOtpForLoggedUsers = async (req, res) => {
+    try {
+
+        req = matchedData(req);
+
+        const { email, otp, password } = req;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                result: null,
+                message: "Email not found"
+            });
+        }
+        if (user.isVerified === false) {
+            return res.status(400).json({
+                success: false,
+                result: null,
+                message: "User is not verified"
+            });
+        }
+        if (user.otp !== otp) {
+            return res.status(400).json({
+                success: false,
+                result: null,
+                message: "Invalid OTP. Please Enter valid OTP"
+            });
+        }
+
+        if (user.otpExpires < Date.now()) {
+            return res.status(400).json({
+                success: false,
+                result: null,
+                message: "OTP has expired. Please request a new OTP"
+            });
+        }
+
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        user.isVerified = true;
+        user.otp = null;
+        user.otpExpires = null;
+
+
+        await user.save();
+
+        const Title = "Password reset successfully";
+        const message = `Your password has been changed successfully.`;
+        await sendNotification({
+            userId: user._id,
+            type: "user",
+            event: "password_changed",
+            title: Title,
+            message: message,
+        });
+        logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
+
+        return res.status(200).json({
+            success: true,
+            result: null,
+            message: "Password reset successfully"
+        });
+
+    
+
+
+
+    } catch (err) {
+
+        console.error("Failed to change password:", err.message);
+        res.status(500).json({
+            success: false,
+            result: null,
+            message: "Failed to change password"
+        });
+    }
+};
+
+module.exports = { verifyOtpForLoggedUsers };
