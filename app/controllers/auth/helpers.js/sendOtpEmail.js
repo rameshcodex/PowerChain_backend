@@ -111,6 +111,13 @@ const sendOtpEmail = async ({ checkedEmail, username, otp, temp, subject, conten
           <h2>Password Changed</h2>
           <p>Hi ${username || "User"},</p>
           <p>Your password was changed successfully.</p>
+
+              <ul>
+            <li><strong>Device:</strong> ${deviceName || "Unknown device"}</li>
+            <li><strong>IP Address:</strong> ${deviceIPAddress || "Unknown IP"}</li>
+          </ul>
+
+          
           <p>If you did not perform this action, please reset your password immediately and contact support.</p>
           <hr />
           <p style="font-size: 0.9em; color: #666;">Power Chain Security Team</p>

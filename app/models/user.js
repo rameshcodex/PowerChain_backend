@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
     twoFASecret: { type: String },
        password: {
         type: String,
-        required: true,
+    
         select: false
     },
     otp: String,

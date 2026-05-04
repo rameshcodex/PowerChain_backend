@@ -1,5 +1,16 @@
 const express = require("express");
 const router = express.Router();
+require('../../config/passport')
+const passport = require('passport')
+
+const requireAuth = passport.authenticate('jwt', {
+    session: false
+})
+
+
+const trimRequest = require('trim-request')
+const { roleAuthorization } = require("../middleware/auth");
+
 
 // controllers
 const { register } = require("../controllers/auth/userOnboard/register.js");
@@ -11,8 +22,7 @@ const { verifyOtpForLoggedUsers } = require("../controllers/auth/userOnboard/ver
 const { refreshToken } = require("../controllers/auth/userOnboard/refreshToken.js");
 const { login } = require("../controllers/auth/userOnboard/login.js");
 const { getUserProfile } = require("../controllers/auth/userOnboard/getUserProfile.js");
-const passport = require('../../config/passport')
-const { requireAuth } = require("../middleware/auth/requireAuth");
+require('../../config/passport')
 const { adminRegister } = require("../controllers/admin/adminRegister");
 const { adminLogin } = require("../controllers/admin/adminLogin");
 const { generateCaptcha } = require("../middleware/utiles/generateCaptcha");
@@ -82,6 +92,7 @@ const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = requir
 const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
 
 
+
 // ...
 // (routes will be added at the end or in a separate call, but I'll add them here if I replace a large block)
 // I'll add them before P2P WALLET ROUTES
@@ -102,9 +113,15 @@ router.post(
 
 router.post("/verify-otp", verifyOtpValidator, verifyOtp);
 
-router.post("/resend-otp",resendotpValidator, resendOtp);
+router.post("/resend-otp", resendotpValidator, resendOtp);
 
-router.post("/reset-password", resetPasswordValidator, resetPassword)
+router.post("/reset-password",
+    requireAuth,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    resetPasswordValidator,
+    resetPassword
+)
 
 router.post("/forgot-password", forgetPasswordValidator, forgetPassword);
 

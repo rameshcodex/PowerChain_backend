@@ -9,18 +9,25 @@ const resetPassword = async (req, res) => {
     try {
         const data = matchedData(req);
 
-        const { email, password, oldPassword } = data;
-        console.log("Resetting password for email:", email);
+            const userId = req.user._id;
 
-        const user = await User.findOne({ email });
+      
+
+        const user = await User.findOne({ _id: userId });
 
         if (!user) {
             return res.status(404).json({
                 success: false,
                 result: null,
-                message: "Email not found"
+                message: "User not found"
             });
         }
+
+
+        const { oldPassword, password } = data;
+
+        console.log("Old Password:", oldPassword);
+
 
         // Only verify old password if the user already has one set
         if (user.password && user.password !== "") {

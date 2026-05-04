@@ -2,25 +2,26 @@ const crypto = require("crypto");
 const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
+const axios = require("axios");
+
 
 
 const verifyToken = async (token) => {
     try {
         const response = await axios.post(
             "https://www.google.com/recaptcha/api/siteverify",
-            null,
-            {
-                params: {
-                    secret: process.env.RECAPTCHA_SECRET_KEY,
-                    response: token,
-                },
-            }
+            new URLSearchParams({
+                secret: process.env.RECAPTCHA_SECRET_KEY,
+                response: token,
+            })
         );
         return response.data.success === true;
     } catch {
         return false;
     }
 };
+
+
 
 const resendOtp = async (req, res) => {
   console.log("FSDFDSFEWRew")
@@ -44,11 +45,13 @@ const resendOtp = async (req, res) => {
         }
 
         const isHuman = await verifyToken(captcha);
+        console.log("Captcha verification result:", isHuman);
+        
 
         if (!isHuman) {
             return res.status(403).json({
                 success: false,
-                message: "Captcha verification failed",
+                message: "Captcha verification failedxxxxxxxxxxxxx",
             });
         }
 

@@ -1,61 +1,62 @@
 const passport = require('passport')
-const { Strategy: JwtStrategy } = require('passport-jwt')
 const User = require('../app/models/user')
 const Admin = require('../app/models/admin')
+const auth = require('../app/middleware/auth')
+const JwtStrategy = require('passport-jwt').Strategy
 
-
+/**
+ * Extracts token from: header, body or query
+ * @param {Object} req - request object
+ * @returns {string} token - decrypted token
+ */
 const jwtExtractor = (req) => {
-  console.log('--- JWT EXTRACTOR CALLED ---')
+  let token = null
 
-  if (req.headers.authorization?.startsWith('Bearer ')) {
-    const token = req.headers.authorization.replace('Bearer ', '').trim()
-    return token
+  if (req.headers.authorization) {
+    token = req.headers.authorization.replace('Bearer ', '').trim()
+  } else if (req.body.token) {
+    token = req.body.token.trim()
+  } else if (req.query.token) {
+    token = req.query.token.trim()
   }
 
-  if (req.body?.token) {
-    return req.body.token.trim()
-  }
-  if (req.query?.token) {
-    return req.query.token.trim()
-  }
-
-  console.log('No token found')
-  return null
+  return token
 }
 
-passport.use(
-  new JwtStrategy(
-    {
-      jwtFromRequest: jwtExtractor,
-      secretOrKey: process.env.JWT_ACCESS_SECRET,
-    },
-    async (payload, done) => {
-      try {
-        console.log('--- JWT VERIFIED ---')
-        console.log('JWT payload:', payload)
+console.log('JWT Extractor initializedssssssssssss') // Debug log
 
-        // Check search in both User and Admin collections
-        let user = await User.findById(payload.userId)
+/**
+ * Options object for jwt middlware
+ */
+const jwtOptions = {
+  jwtFromRequest: jwtExtractor,
+  secretOrKey: process.env.JWT_SECRET
+}
 
-        if (!user) {
-          user = await Admin.findById(payload.userId)
-        }
+console.log('JWT Options:', jwtOptions, process.env.JWT_SECRET, "process.env.JWT_SECRET") // Debug log
 
-        console.log('User found:', !!user)
-
-        if (!user) {
-          console.log('User not found in DB')
-          return done(null, false)
-        }
-
-        console.log('Authentication successful')
-        return done(null, user)
-      } catch (err) {
-        console.error('Passport error:', err)
-        return done(err, false)
-      }
+/**
+ * Login with JWT middleware
+ */
+const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
+  User.findById(payload.data._id, (err, user) => {
+    console.log('JWT Payload:', payload.data._id) // Debug log
+    if (err) {
+      return done(err, false)
     }
-  )
-)
+    console.log('JWT Payload:', payload.data._id) // Debug log
+    if (user) {
+      return done(null, user)
+    } else {
+      Admin.findById(payload.data._id, (err, user1) => {
+        if (err) {
+          return done(err, false)
+        }
+        return !user1 ? done(null, false) : done(null, user1)
+      })
+    }
+    // return !user ? done(null, false) :
+  })
+})
 
-module.exports = passport
+passport.use(jwtLogin)

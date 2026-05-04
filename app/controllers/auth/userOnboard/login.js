@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 
-const unVerifiedUsers  = require("../../../models/unVerifiedUsers");
+const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 
 const verifyToken = async (token) => {
     try {
@@ -75,12 +75,12 @@ const login = async (req, res) => {
         // req.session.captcha = null
 
 
-   const user = await User.findOne({
-    $or: [
-        { email: forCheck },
-        { username: forCheck }
-    ]
-}).select("+password");
+        const user = await User.findOne({
+            $or: [
+                { email: forCheck },
+                { username: forCheck }
+            ]
+        }).select("+password");
         console.log("User found:", user);
         const unVerifiedUser = await unVerifiedUsers.findOne({
             $or: [
@@ -108,33 +108,33 @@ const login = async (req, res) => {
         //         message: "User not verified"
         //     });
         // }
-     if (!user) {
-    return res.status(404).json({
-        success: false,
-        message: "User not found"
-    });
-}
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
 
-if (unVerifiedUser) {
-    return res.status(400).json({
-        success: false,
-        message: "User not verified"
-    });
-}
+        if (unVerifiedUser) {
+            return res.status(400).json({
+                success: false,
+                message: "User not verified"
+            });
+        }
 
-if (user.fromGoogle === true) {
-    return res.status(400).json({
-        success: false,
-        message: "This account was created using Google. Please use Google login."
-    });
-}
+        if (user.fromGoogle === true) {
+            return res.status(400).json({
+                success: false,
+                message: "This account was created using Google. Please use Google login."
+            });
+        }
 
-if (!user.password) {
-    return res.status(400).json({
-        success: false,
-        message: "Password missing. Please reset password."
-    });
-}
+        if (!user.password) {
+            return res.status(400).json({
+                success: false,
+                message: "Password missing. Please reset password."
+            });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -153,18 +153,18 @@ if (!user.password) {
 
         const checkedEmail = user.email;
         if (checkedEmail) {
-          sendOtpEmail({
-              checkedEmail,
-              username: user.name || user.username,
-              temp: "login_notification",
-              subject: "Login Alert",
-              deviceName,
-              deviceIPAddress,
-          }).catch((err) => {
-              console.error("Failed to send login notification email:", err.message);
-          });
+            sendOtpEmail({
+                checkedEmail,
+                username: user.name || user.username,
+                temp: "login_notification",
+                subject: "Login Alert",
+                deviceName,
+                deviceIPAddress,
+            }).catch((err) => {
+                console.error("Failed to send login notification email:", err.message);
+            });
         } else {
-          console.warn("Login notification skipped: user has no email address");
+            console.warn("Login notification skipped: user has no email address");
         }
 
         // 2FA CHECK (IMPORTANT PART)
