@@ -1,27 +1,45 @@
 const jwt = require("jsonwebtoken");
 const User = require("../../models/user");
-const { refreshToken } = require("../../controllers/auth/userOnboard/refreshToken");
+
+const extractBearer = (authorizationHeader) => {
+  if (!authorizationHeader || typeof authorizationHeader !== "string") return null;
+  const parts = authorizationHeader.trim().split(/\s+/);
+  if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+    return parts[1].trim();
+  }
+  return null;
+};
 
 const tokenValidator = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const token = extractBearer(req.headers.authorization);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         result: null,
-        message: "Token missing"
+        message: "Token missing — send Authorization: Bearer <accessToken> from login (not refresh token)",
       });
     }
-    // console.log(authHeader,"token");
 
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) {
+      return res.status(500).json({
+        success: false,
+        result: null,
+        message: "Server misconfiguration: JWT_ACCESS_SECRET is not set",
+      });
+    }
 
-    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, secret);
 
-    // console.log(token,"aploted");
-
-
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    if (decoded.twoFA === true) {
+      return res.status(401).json({
+        success: false,
+        result: null,
+        message: "Complete 2FA with POST /api/login/2fa-verify before calling this endpoint",
+      });
+    }
 
     const user = await User.findById(decoded.userId);
     if (!user) {

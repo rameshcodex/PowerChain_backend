@@ -13,7 +13,7 @@ const resetPassword = async (req, res) => {
 
       
 
-        const user = await User.findOne({ _id: userId });
+        const user = await User.findOne({ _id: userId }).select("+password");
 
         if (!user) {
             return res.status(404).json({
@@ -26,12 +26,8 @@ const resetPassword = async (req, res) => {
 
         const { oldPassword, password } = data;
 
-        console.log("Old Password:", oldPassword);
-
-
-        // Only verify old password if the user already has one set
+        // Only verify old password if the user already has one set (needs +password on query)
         if (user.password && user.password !== "") {
-            // If the user has a password, they MUST provide the correct old password
             if (!oldPassword || oldPassword === "empty") {
                 return res.status(400).json({
                     success: false,
@@ -45,7 +41,7 @@ const resetPassword = async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     result: null,
-                    message: "Old password is incorrect"
+                    message: "Old password is wrong"
                 });
             }
         }

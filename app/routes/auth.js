@@ -3,6 +3,7 @@ const router = express.Router();
 require('../../config/passport')
 const passport = require('passport')
 
+/** Passport JWT — used on routes that accept user or admin tokens */
 const requireAuth = passport.authenticate('jwt', {
     session: false
 })
@@ -22,7 +23,6 @@ const { verifyOtpForLoggedUsers } = require("../controllers/auth/userOnboard/ver
 const { refreshToken } = require("../controllers/auth/userOnboard/refreshToken.js");
 const { login } = require("../controllers/auth/userOnboard/login.js");
 const { getUserProfile } = require("../controllers/auth/userOnboard/getUserProfile.js");
-require('../../config/passport')
 const { adminRegister } = require("../controllers/admin/adminRegister");
 const { adminLogin } = require("../controllers/admin/adminLogin");
 const { generateCaptcha } = require("../middleware/utiles/generateCaptcha");
@@ -116,7 +116,7 @@ router.post("/verify-otp", verifyOtpValidator, verifyOtp);
 router.post("/resend-otp", resendotpValidator, resendOtp);
 
 router.post("/reset-password",
-    requireAuth,
+    tokenValidator,
     roleAuthorization(['user']),
     trimRequest.all,
     resetPasswordValidator,

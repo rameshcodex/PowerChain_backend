@@ -3,16 +3,25 @@
  * @param {Object} res - response object
  * @param {Object} err - error object
  */
-const handleError = (res = {}, err = {}) => {
-    // Prints error in console
-    if (process.env.NODE_ENV === 'development') {
-        console.log(err)
+const httpStatusFromErr = (err = {}) => {
+    const candidates = [err.code, err.statusCode, err.status]
+    for (const c of candidates) {
+        const n = Number(c)
+        if (Number.isInteger(n) && n >= 400 && n <= 599) return n
     }
-    // Sends error to user
-    res.status(err.code).json({
+    return 500
+}
+
+const handleError = (res = {}, err = {}) => {
+    if (process.env.NODE_ENV !== 'production') {
+        console.error(err)
+    }
+    const statusCode = httpStatusFromErr(err)
+    const msg = Array.isArray(err.message) ? err.message[0]?.msg : err.message
+    res.status(statusCode).json({
         success: false,
         result: null,
-        message: Array.isArray(err.message) ? err.message[0].msg : err.message
+        message: msg || 'Something went wrong'
     })
 }
 
