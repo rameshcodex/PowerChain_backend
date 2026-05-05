@@ -12,6 +12,7 @@ const i18n = require('i18n');
 const initMongo = require('./config/mongo')
 const router = require('./app/routes/auth');
 const binanceRoute = require('./app/routes/tradeRoutes');
+const okxRoutes = require('./app/routes/OKX');
 const { log } = require('console');
 const passport = require("./config/passport")
 const session = require("express-session")
@@ -135,6 +136,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api", router);
 app.use("/api/binance", binanceRoute);
+app.use("/api/okx", okxRoutes);
 
 app.use(express.static(path.join(__dirname, 'views')))
 app.engine('html', require('ejs').renderFile)

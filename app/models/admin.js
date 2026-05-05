@@ -6,9 +6,12 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, select: false },
     // otp: String,
     // otpExpires: Date,
-    role: { type: String, default: "admin" }
-
-})
+    role: { type: String, default: "admin" },
+},
+    {
+        timestamps: true
+    }
+)
 
 const Admin = mongoose.model('Admin', adminSchema);
 

@@ -11,8 +11,7 @@ const userSchema = new mongoose.Schema({
     password: String,
     otp: String,
     otpExpires: Date,
-    isVerified: { type: Boolean, default: false }
-
+    isVerified: { type: Boolean, default: false },
 })
 
 const unVerifiedUsers = mongoose.model('unVerifiedUsers', userSchema);

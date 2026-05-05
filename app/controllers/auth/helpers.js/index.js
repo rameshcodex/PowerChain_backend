@@ -1,8 +1,8 @@
-const { generateToken } = require('./generateToken')
-const { sendOtpEmail } = require('./sendOtpEmail')
+
 
 
 module.exports = {
-    generateToken,
-    sendOtpEmail
+    generateToken: require('./generateToken')?.generateToken,
+    sendOtpEmail: require('./sendOtpEmail')?.sendOtpEmail,
+    getDecimalPrecision: require('./getDecimalPrecision')?.getDecimalPrecision
 }

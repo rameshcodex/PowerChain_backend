@@ -18,9 +18,15 @@ const userSchema = new mongoose.Schema({
     provider: String,
     fromGoogle: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
-    role: { type: String, default: "user" }
+    role: { type: String, default: "user" },
+    favoritePairsOKX: [{ type: String }],
+    futureFavoritePairsOKX: [{ type: String }],
 
-})
+},
+    {
+        timestamps: true
+    }
+)
 
 const User = mongoose.model('User', userSchema);
 
