@@ -19,6 +19,7 @@ const session = require("express-session")
 const crypto = require('crypto');
 const { initSocket } = require('./app/controllers/Ticket/socket/TicketMessSocket');
 const { setupP2PSocket } = require('./app/controllers/auth/p2p/socket/p2pSocketHandler');
+// const { startDailyKycReminderJob } = require('./app/utils/kycNotificationService');
 
 
 
@@ -147,4 +148,5 @@ httpServer.listen(port, () => {
     log(`Socket.IO initialized`)
 })
 initMongo();
+// startDailyKycReminderJob();
 module.exports = app
