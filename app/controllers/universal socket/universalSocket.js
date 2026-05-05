@@ -1,7 +1,7 @@
 /**
  * UniversalSocket (Browser/React)
  * - ticker-only
- * - supports Binance and Bybit public ticker streams
+ * - supports Binance, Bybit, Bitget, VALR, KuCoin, and OKX public ticker streams
  * - auto reconnects and resubscribes
  *
  * Example:
@@ -43,6 +43,7 @@ export default class UniversalSocket {
     else if (this.type === "valr") url = "wss://api.valr.com/ws/trade";
     else if (this.type === "kucoin" && this.tradeType == "spot") url = `wss://ws-api-spot.kucoin.com?token=${this.currentSocketToken}`
     else if (this.type === "kucoin" && this.tradeType == "futures") url = `wss://ws-api-futures.kucoin.com?token=${this.currentSocketToken}`
+    else if (this.type === "okx") url = "wss://ws.okx.com:8443/ws/v5/public";
     else throw new Error("Unsupported exchange type: " + this.type);
 
     this.ws = new WebSocket(url);
@@ -121,6 +122,13 @@ export default class UniversalSocket {
       }
 
     }
+    else if (this.type == "okx") {
+      const args = symbols.map((symbol) => ({
+        channel: "tickers",
+        instId: symbol,
+      }));
+      this._sendSubscribe(args);
+    }
     else {
       normalized.forEach((sym) => {
         const topic =
@@ -168,6 +176,13 @@ export default class UniversalSocket {
         normalized = `/contractMarket/snapshot:${normalized}`
         this._unsendSubscribe(normalized);
       }
+    }
+    else if (this.type == "okx") {
+      const args = symbols.map((symbol) => ({
+        channel: "tickers",
+        instId: symbol,
+      }));
+      this._unsendSubscribe(args);
     }
     else {
       normalized.forEach((sym) => {
@@ -437,6 +452,13 @@ export default class UniversalSocket {
           "topic": topic,
           "response": true
         }));
+      } else if (this.type === "okx") {
+        this.ws.send(
+          JSON.stringify({
+            op: "subscribe",
+            args: topic,
+          })
+        );
       }
     } catch (_) { }
   }
@@ -462,6 +484,13 @@ export default class UniversalSocket {
           "topic": topic,
           "response": true
         }));
+      } else if (this.type === "okx") {
+        this.ws.send(
+          JSON.stringify({
+            op: "unsubscribe",
+            args: topic,
+          })
+        );
       }
     } catch (_) { }
   }
@@ -945,6 +974,33 @@ export default class UniversalSocket {
         bids: ob.bids.slice(0, this.orderBookLimit),
         asks: ob.asks.slice(0, this.orderBookLimit)
       });
+    }
+
+    // OKX format
+    if (this.type === "okx" && data?.arg?.channel === "tickers" && data?.data?.length) {
+      for (const ticker of data.data) {
+        const normalized = {
+          exchange: "okx",
+          symbol: ticker.instId,
+          price: Number(ticker.last),
+          high: Number(ticker.high24h),
+          low: Number(ticker.low24h),
+          volumebase: Number(ticker.vol24h)?.toFixed(2),
+          volumequote: Number(ticker.volCcy24h)?.toFixed(2),
+          changePercent: Number(ticker.open24h)
+            ? Number(
+              (
+                ((ticker.last - ticker.open24h) /
+                  ticker.open24h) *
+                100
+              ).toFixed(2)
+            )
+            : 0,
+          ts: ticker.ts,
+        };
+        this._emit("ticker", normalized);
+      }
+      return;
     }
 
   }

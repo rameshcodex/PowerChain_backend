@@ -15,13 +15,12 @@ const pairSchema = new mongoose.Schema({
     stepSize: Number,
     minNotional: Number,
     maxNotional: Number,
-    exchange:[String]
-
-
+    exchange:[String],
 },
 {
-    timestamps: true,
-  })
+        timestamps: true,
+    }
+)
 
 const pairs = mongoose.model("pairs", pairSchema);
 
