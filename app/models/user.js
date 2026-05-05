@@ -10,13 +10,13 @@ const userSchema = new mongoose.Schema({
     phone: { type: String },
     image: String,
     country: { type: String },
-    telegramId: { type: String },
-    telegramUsername: { type: String },
+    // telegramId: { type: String },
+    // telegramUsername: { type: String },
     twoFAEnabled: { type: Boolean, default: false, },
     twoFASecret: { type: String },
-       password: {
+    password: {
         type: String,
-    
+
         select: false
     },
     otp: String,
@@ -24,11 +24,11 @@ const userSchema = new mongoose.Schema({
     googleId: String,
     provider: String,
     fromGoogle: { type: Boolean, default: false },
-    
+
     isVerified: { type: Boolean, default: false },
     role: { type: String, default: "user" },
-    
-      deviceDetails: {
+
+    deviceDetails: {
         deviceIPAddress: String,
         deviceType: String,
     },
@@ -40,9 +40,9 @@ const userSchema = new mongoose.Schema({
 
 
 },
-{
-    timestamps: true,
-  })
+    {
+        timestamps: true,
+    })
 
 const User = mongoose.model('User', userSchema);
 

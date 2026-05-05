@@ -9,9 +9,17 @@ const resetPassword = async (req, res) => {
     try {
         const data = matchedData(req);
 
-            const userId = req.user._id;
+        const userId = req.user._id;
 
-      
+        const deviceName = req.body.deviceName || req.body.deviceType || req.headers['user-agent'] || "Unknown device";
+        const deviceIPAddress =
+            (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',').shift().trim()) ||
+            req.socket?.remoteAddress ||
+            req.ip ||
+            null;
+
+
+
 
         const user = await User.findOne({ _id: userId }).select("+password");
 
@@ -63,25 +71,27 @@ const resetPassword = async (req, res) => {
 
         await user.save();
 
-           const Title = "Password Changed";
-            const message = `Your password has been changed successfully.`;
-            await sendNotification({
-              userId: user._id,
-              type: "user",
-              event: "password_changed",
-              title: Title,
-              message: message,
-            });
-            logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
+        const Title = "Password Changed";
+        const message = `Your password has been changed successfully.`;
+        await sendNotification({
+            userId: user._id,
+            type: "user",
+            event: "password_changed",
+            title: Title,
+            message: message,
+        });
+        logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
 
-            sendOtpEmail({
-              checkedEmail: user.email,
-              username: user.name || user.username,
-              temp: "password_changed",
-              subject: "Password Changed Successfully"
-            }).catch((err) => {
-              console.error("Failed to send password changed email:", err.message);
-            });
+        sendOtpEmail({
+            checkedEmail: user.email,
+            username: user.name || user.username,
+            temp: "password_changed",
+            subject: "Password Changed Successfully",
+            deviceName,
+            deviceIPAddress,
+        }).catch((err) => {
+            console.error("Failed to send password changed email:", err.message);
+        });
 
         return res.status(200).json({
             success: true,

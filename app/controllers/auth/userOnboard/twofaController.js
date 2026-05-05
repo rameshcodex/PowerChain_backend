@@ -3,6 +3,7 @@ const QRCode = require("qrcode");
 const User = require("../../../models/user");
 const jwt = require("jsonwebtoken");
 const { sendNotification } = require("../../../utils/notificationHelper");
+const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 const { logger } = require("../../../../winston");
 
 
@@ -165,6 +166,8 @@ const loginTwoFAVerify = async (req, res) => {
     const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
       expiresIn: process.env.JWT_REFRESH_EXPIRES,
     });
+
+    schedulePostLoginKycReminder(req.user._id);
 
     return res.status(200).json({
       success: true,

@@ -4,6 +4,7 @@ const { matchedData } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
+// const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 
@@ -197,6 +198,7 @@ const login = async (req, res) => {
             { expiresIn: process.env.JWT_REFRESH_EXPIRES }
         );
 
+        // schedulePostLoginKycReminder(user._id);
 
         return res.status(200).json({
             success: true,

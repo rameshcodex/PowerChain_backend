@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["p2p", "spot", "support", "user", "fund"],
+            enum: ["p2p", "spot", "support", "user", "fund", "kyc"],
             required: true,
         },
         event: {
@@ -29,7 +29,12 @@ const notificationSchema = new mongoose.Schema(
                 "2fa_enabled",
                 "2fa_disabled",
                 "withdrawal_initiated",
-                "deposit_confirmed"
+                "deposit_confirmed",
+                "kyc_reminder",
+                "kyc_daily_reminder",
+                "kyc_submitted",
+                "kyc_approved",
+                "kyc_rejected"
             ],
             required: true,
         },

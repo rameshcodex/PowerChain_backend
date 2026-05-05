@@ -33,7 +33,6 @@ const { isAdmin, isSubAdmin } = require("../middleware/auth/isAdmin");
 
 
 
-// KYC
 
 
 
@@ -49,16 +48,23 @@ const { updateUserProfileValidator } = require("../controllers/auth/validator/up
 const { resetPasswordValidator } = require("../controllers/auth/validator/resetPasswordValidator");
 const { createTicketValidator } = require("../controllers/Ticket/validator/createTicketValidator");
 const { createP2PPostValidator } = require("../controllers/auth/validator/p2pPostValidator");
+const { submitKYCValidator } = require("../controllers/auth/validator/submitKYCValidator");
 
 
 const { googleLogin } = require("../controllers/auth/userOnboard/google-login.js");
 const { getBinanceData, binanceGet, getAssetConfig, getAccountBalancesWithAssetInfo, getPairsFromAssetConfig, getBinanceMarketData, getTopPairs, createSpotOrder, getPairBalances } = require("../controllers/auth/binanceApi");
 const { updateProfileImage } = require("../controllers/auth/userOnboard/profileImageUploader.js");
+
 const { createUploader } = require("../middleware/upload");
 
 const uploadAvatar = createUploader({
     folder: "avatars",
     prefix: "avatar",
+});
+
+const uploadKYC = createUploader({
+    folder: "kyc",
+    prefix: "kyc",
 });
 
 const uploadP2P = createUploader({
@@ -90,6 +96,8 @@ const { createTradeOrder, uploadTradeImage, getTradeOrder, confirmPayment, relea
 const { getNotifications, markAsRead, getUnreadCount, clearNotifications, markAllAsRead } = require("../controllers/auth/notification/notification");
 const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = require("../controllers/auth/spot/binanceMarketData.js");
 const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
+
+const { submitKYC, updateKYCStatus, getKYC } = require("../controllers/auth/userOnboard");
 
 
 
@@ -131,8 +139,41 @@ router.post("/login", loginValidator, login);
 
 router.post("/refresh-token", refreshToken);
 
+
+
+// userKyc API ROUTES
+router.get(
+    "/get-kyc",
+    tokenValidator,
+    roleAuthorization(['user']),
+    getKYC
+);
+
+router.post(
+    "/submit-kyc",
+    tokenValidator,
+    roleAuthorization(['user']),
+    uploadKYC.any(),
+    submitKYCValidator,
+    submitKYC
+);
+
+router.patch(
+    "/admin/kyc/:kycId/status",
+    tokenValidator,
+    roleAuthorization(['admin', 'superadmin', 'subadmin']),
+    updateKYCStatus
+);
+
+
 //USER PROFILE API ROUTES
-router.get("/get-profile", requireAuth, getUserProfile);
+router.get("/get-profile",
+    tokenValidator,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    // updateUserProfileValidator,
+    getUserProfile
+);
 
 router.patch("/update-profile", requireAuth, updateUserProfileValidator, updateUserProfile)
 router.patch(
@@ -362,7 +403,3 @@ router.get("/admin/get-all-tickets", requireAuth, isAdmin, isSubAdmin, getAllTic
 router.get("admin/close-ticket/:id", requireAuth, isAdmin, isSubAdmin, closeTicket);
 
 module.exports = router;
-
-
-
-

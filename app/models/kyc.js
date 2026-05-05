@@ -1,21 +1,20 @@
 const mongoose = require('mongoose');
-const passport = require('passport');
 
 const kycSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: {
         type: String,
         enum: ['Not Initiated', 'pending', 'verified', 'rejected'],
         default: 'Not Initiated'
     },
 
-    firstName:{
+    firstName: {
         type: String,
     },
-    middleName:{
+    middleName: {
         type: String,
     },
-    lastName:{
+    lastName: {
         type: String,
     },
     dateOfBirth: {
@@ -43,38 +42,39 @@ const kycSchema = new mongoose.Schema({
         landmark: String,
     },
     identification: {
-        passportNumber:{
-           frontimage: String,
+        passportNumber: {
+            frontimage: String,
         },
-        nationalID:{
+        nationalID: {
             frontimage: String,
             backimage: String,
         },
-        greenbook:{
+        greenbook: {
             frontimage: String,
         },
-        idenditynumber:{
+        idenditynumber: {
             type: String,
         },
         selectIDType: {
             type: String,
-            enum: ['passport', 'nationalID', 'drivingLicense'],
+            enum: ['passport', 'national_id', 'nationalID', 'driving_license', 'drivingLicense'],
         },
 
-dateofexpiry: {
-    type: Date, 
-    },
-    documentupload:{
+        dateofexpiry: {
+            type: Date,
+        },
+        documentupload: {
             frontimage: String,
-    },
-    personalinformation:{
-        type: Boolean,
+        },
+        personalinformation: {
+            type: Boolean,
+
+        }
 
     }
 
-}
+});
 
-    });
+const KYC = mongoose.model('KYC', kycSchema);
 
-
-
+module.exports = KYC;
