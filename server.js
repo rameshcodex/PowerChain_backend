@@ -6,14 +6,14 @@ const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-// const passport = require('passport');
+const passport = require('passport');
 const path = require('path');
 const i18n = require('i18n');
 const initMongo = require('./config/mongo')
 const router = require('./app/routes/auth');
 const binanceRoute = require('./app/routes/tradeRoutes');
 const { log } = require('console');
-const passport = require("./config/passport")
+// const passport = require("./config/passport")
 const session = require("express-session")
 const crypto = require('crypto');
 const { initSocket } = require('./app/controllers/Ticket/socket/TicketMessSocket');
@@ -131,7 +131,6 @@ app.use("/api/auth", require("./app/routes/googleAuth"));
 
 //  STATIC FILES
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 
 app.use("/api", router);
 app.use("/api/binance", binanceRoute);

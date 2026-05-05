@@ -1,5 +1,6 @@
-const { validate } = require('./validate')
+const { roleAuthorization } = require('./roleAuthorization')
+
 
 module.exports = {
-    validate
+    roleAuthorization
 }

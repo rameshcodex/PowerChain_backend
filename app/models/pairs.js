@@ -18,7 +18,10 @@ const pairSchema = new mongoose.Schema({
     exchange:[String]
 
 
-})
+},
+{
+    timestamps: true,
+  })
 
 const pairs = mongoose.model("pairs", pairSchema);
 

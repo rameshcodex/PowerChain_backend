@@ -4,8 +4,11 @@ const getUserProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     console.log(userId);
-    const user = await User.findById(userId).select("-otp -otpExpires -__v").lean();
+    const user = await User.findById(userId).select("+password -otp -otpExpires -__v").lean();
+
+    console.log("User profile data:", user);
     const isPassword = user.password ? true : false;
+    console.log(isPassword, "PPPPPPPOOO");
 
     delete user.password;
     if (!user) {

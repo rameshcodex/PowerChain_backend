@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
+const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -10,6 +11,13 @@ exports.googleLogin = async (req, res) => {
   try {
     console.log("Received Google login request:", req.body);
     const { credential, accessToken: googleAccessToken, email, name, googleId } = req.body;
+
+    const deviceName = req.body.deviceName || req.body.deviceType || req.headers['user-agent'] || "Unknown device";
+    const deviceIPAddress =
+        (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',').shift().trim()) ||
+        req.socket?.remoteAddress ||
+        req.ip ||
+        null;
 
     let userEmail, userName, userGoogleId;
 
@@ -76,8 +84,27 @@ exports.googleLogin = async (req, res) => {
       console.log("User found:", user._id);
     }
 
+    user.deviceDetails = {
+      deviceIPAddress,
+      deviceType: deviceName,
+    };
+    await user.save();
 
-    // // 2FA CHECK (IMPORTANT PART)
+    const checkedEmail = user.email;
+    if (checkedEmail) {
+      sendOtpEmail({
+          checkedEmail,
+          username: user.name || user.username,
+          temp: "login_notification",
+          subject: "Login Alert",
+          deviceName,
+          deviceIPAddress,
+      }).catch((err) => {
+          console.error("Failed to send Google login notification email:", err.message);
+      });
+    } else {
+      console.warn("Google login notification skipped: user has no email address");
+    }
     //       if (user.twoFAEnabled === true) {
     //           const tempToken = jwt.sign(
     //               { userId: user._id, twoFA: true },

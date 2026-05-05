@@ -1,6 +1,7 @@
 const { matchedData } = require("express-validator");
 const User = require("../../../models/user");
 const bcrypt = require("bcryptjs");
+const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { logger } = require("../../../../winston");
 
@@ -8,22 +9,25 @@ const resetPassword = async (req, res) => {
     try {
         const data = matchedData(req);
 
-        const { email, password, oldPassword } = data;
-        console.log("Resetting password for email:", email);
+            const userId = req.user._id;
 
-        const user = await User.findOne({ email });
+      
+
+        const user = await User.findOne({ _id: userId }).select("+password");
 
         if (!user) {
             return res.status(404).json({
                 success: false,
                 result: null,
-                message: "Email not found"
+                message: "User not found"
             });
         }
 
-        // Only verify old password if the user already has one set
+
+        const { oldPassword, password } = data;
+
+        // Only verify old password if the user already has one set (needs +password on query)
         if (user.password && user.password !== "") {
-            // If the user has a password, they MUST provide the correct old password
             if (!oldPassword || oldPassword === "empty") {
                 return res.status(400).json({
                     success: false,
@@ -37,7 +41,7 @@ const resetPassword = async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     result: null,
-                    message: "Old password is incorrect"
+                    message: "Old password is wrong"
                 });
             }
         }
@@ -69,7 +73,15 @@ const resetPassword = async (req, res) => {
               message: message,
             });
             logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
-        
+
+            sendOtpEmail({
+              checkedEmail: user.email,
+              username: user.name || user.username,
+              temp: "password_changed",
+              subject: "Password Changed Successfully"
+            }).catch((err) => {
+              console.error("Failed to send password changed email:", err.message);
+            });
 
         return res.status(200).json({
             success: true,
