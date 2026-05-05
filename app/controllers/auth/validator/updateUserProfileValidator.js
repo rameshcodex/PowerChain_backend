@@ -11,14 +11,14 @@ const updateUserProfileValidator = [
         .isLength({ min: 3, max: 25 })
         .withMessage('Name must be between 3 and 25 characters'),
 
-    check('username')
-        .trim()
-        .notEmpty()
-        .withMessage('Username can not be empty')
-        .matches(/^[a-zA-Z0-9]+$/)
-        .withMessage('Username can contain only letters and numbers')
-        .isLength({ min: 3, max: 25 })
-        .withMessage('Username must be between 3 and 25 characters'),
+    // check('username')
+    //     .trim()
+    //     .notEmpty()
+    //     .withMessage('Username can not be empty')
+    //     .matches(/^[a-zA-Z0-9]+$/)
+    //     .withMessage('Username can contain only letters and numbers')
+    //     .isLength({ min: 3, max: 25 })
+    //     .withMessage('Username must be between 3 and 25 characters'),
 
 
     check('email')
@@ -40,6 +40,24 @@ const updateUserProfileValidator = [
         .bail()
         .isLength({ min: 10, max: 10 })
         .withMessage('Phone must be 10 digits'),
+
+    check('country')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Country must be less than 50 characters'),
+
+    check('telegramId')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Telegram ID must be less than 50 characters'),
+
+    check('telegramUsername')
+        .optional()
+        .trim()
+        .isLength({ max: 50 })
+        .withMessage('Telegram Username must be less than 50 characters'),
 
     // check('password')
     //     .notEmpty()

@@ -1,5 +1,17 @@
 const express = require("express");
 const router = express.Router();
+require('../../config/passport')
+const passport = require('passport')
+
+/** Passport JWT — used on routes that accept user or admin tokens */
+const requireAuth = passport.authenticate('jwt', {
+    session: false
+})
+
+
+const trimRequest = require('trim-request')
+const { roleAuthorization } = require("../middleware/auth");
+
 
 // controllers
 const { register } = require("../controllers/auth/userOnboard/register.js");
@@ -11,8 +23,6 @@ const { verifyOtpForLoggedUsers } = require("../controllers/auth/userOnboard/ver
 const { refreshToken } = require("../controllers/auth/userOnboard/refreshToken.js");
 const { login } = require("../controllers/auth/userOnboard/login.js");
 const { getUserProfile } = require("../controllers/auth/userOnboard/getUserProfile.js");
-const passport = require('../../config/passport')
-const { requireAuth } = require("../middleware/auth/requireAuth");
 const { adminRegister } = require("../controllers/admin/adminRegister");
 const { adminLogin } = require("../controllers/admin/adminLogin");
 const { generateCaptcha } = require("../middleware/utiles/generateCaptcha");
@@ -20,6 +30,12 @@ const { updateUserProfile } = require("../controllers/auth/userOnboard/updateUse
 const { setUpTwoFA, verifyTwoFA, disableTwoFA, loginTwoFAVerify } = require("../controllers/auth/userOnboard/twofaController.js")
 const { getAllTickets } = require("../controllers/admin/Ticket/getAllTickets");
 const { isAdmin, isSubAdmin } = require("../middleware/auth/isAdmin");
+
+
+
+// KYC
+
+
 
 // validators
 const { forgetPasswordValidator } = require("../controllers/auth/validator/forgetPasswordValidator");
@@ -73,6 +89,8 @@ const { transferWallet, getP2PWallet, getP2PWalletById, getTransferHistory } = r
 const { createTradeOrder, uploadTradeImage, getTradeOrder, confirmPayment, releaseAssets, cancelTradeOrder, sendP2PMessage } = require("../controllers/auth/p2p/p2pPostOrder.js");
 const { getNotifications, markAsRead, getUnreadCount, clearNotifications, markAllAsRead } = require("../controllers/auth/notification/notification");
 const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = require("../controllers/auth/spot/binanceMarketData.js");
+const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
+
 
 
 // ...
@@ -95,9 +113,15 @@ router.post(
 
 router.post("/verify-otp", verifyOtpValidator, verifyOtp);
 
-router.post("/resend-otp", resendOtp);
+router.post("/resend-otp", resendotpValidator, resendOtp);
 
-router.post("/reset-password", resetPasswordValidator, resetPassword)
+router.post("/reset-password",
+    tokenValidator,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    resetPasswordValidator,
+    resetPassword
+)
 
 router.post("/forgot-password", forgetPasswordValidator, forgetPassword);
 
@@ -114,7 +138,6 @@ router.patch("/update-profile", requireAuth, updateUserProfileValidator, updateU
 router.patch(
     "/update-profile-image",
     requireAuth,
-    uploadAvatar.single("avatar"),
     updateProfileImage
 );
 
