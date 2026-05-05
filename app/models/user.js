@@ -37,7 +37,8 @@ const userSchema = new mongoose.Schema({
         enum: ['Not Initiated', 'pending', 'verified', 'rejected'],
         default: 'Not Initiated'
     },
-
+    favoritePairsOKX: [{ type: String , default: [] }],
+    futureFavoritePairsOKX: [{ type: String, default: [] }],
 
 },
     {
