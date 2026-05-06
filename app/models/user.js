@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
 
     isVerified: { type: Boolean, default: false },
     role: { type: String, default: "user" },
-    status: { type: String, enum: ['active', 'inactive'], default: 'active', index: true },
+    status: { type: Boolean, default: true, index: true },
     isDeleted: { type: Boolean, default: false, index: true },
 
     deviceDetails: {

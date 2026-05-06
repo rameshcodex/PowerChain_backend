@@ -1,5 +1,8 @@
 const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
 const Ticket = require("../../../models/createTicket");
+const User = require("../../../models/user");
+const Admin = require("../../../models/admin");
 
 let io;
 
@@ -11,38 +14,90 @@ const initSocket = (httpServer) => {
     },
   });
 
-  io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
+  // Socket authentication middleware
+  io.use(async (socket, next) => {
+    try {
+      let token = socket.handshake.auth.token || 
+                  socket.handshake.headers.authorization || 
+                  socket.handshake.query.token;
+      
+      if (token && token.startsWith('Bearer ')) {
+        token = token.split(' ')[1];
+      }
 
-    // User/Admin joins support room
+      if (!token) {
+        console.warn(`[Socket Auth] No token provided for socket: ${socket.id}. Proceeding as unauthenticated.`);
+        return next();
+      }
+
+      const secret = process.env.JWT_ACCESS_SECRET;
+      console.log("🚀 ~ initSocket ~ secret:", secret)
+      const decoded = jwt.verify(token, secret);
+      console.log("🚀 ~ initSocket ~ decoded:", decoded)
+
+      // Extract userId from token
+      let account = await User.findById(decoded.userId).select("_id name email") || 
+                    await Admin.findById(decoded.userId).select("_id name email");
+      console.log("🚀 ~ initSocket ~ account:", account)
+
+      if (account) {
+        socket.user = account;
+        console.log(`[Socket Auth] Authenticated: ${account.name} (ID: ${account._id})`);
+      } else {
+        console.warn(`[Socket Auth] User not found for ID: ${decoded.userId}`);
+      }
+      next();
+    } catch (err) {
+      console.error("[Socket Auth] Token verification failed:", err.message);
+      // Still allow connection but as unauthenticated
+      next();
+    }
+  });
+
+  io.on("connection", (socket) => {
+    if (socket.user) {
+      const userId = socket.user._id.toString();
+      console.log("🚀 ~ initSocket ~ userId:", userId)
+      const personalRoom = `user_${userId}`;
+      console.log("🚀 ~ initSocket ~ personalRoom:", personalRoom)
+
+      // Automatically join personal room for authenticated users
+      socket.join(personalRoom);
+      console.log(`[Socket] Authenticated user ${userId} joined personal room: ${personalRoom}`);
+    } else {
+      console.log(`[Socket] Unauthenticated connection: ${socket.id}`);
+    }
+
+    // Still allow manual joining for backward compatibility or public rooms
+    socket.on("join_user", ({ userId }) => {
+        if (!userId) return;
+        const roomName = `user_${userId.toString()}`;
+        socket.join(roomName);
+        console.log(`[Socket] Manual room join: ${roomName}`);
+    });
+
+
+    // Join Support Room
     socket.on("join_support", ({ support_id }) => {
       if (support_id) {
         const roomName = support_id.toString();
         socket.join(roomName);
-        console.log(`[Support Socket] Socket ${socket.id} joined support room: ${roomName}`);
+        console.log(`[Support Socket] User ${userId} joined room: ${roomName}`);
       }
     });
 
-    // User joins their own room for notifications
-    socket.on("join_user", ({ userId }) => {
-      const roomName = `user_${userId.toString()}`;
-      socket.join(roomName);
-      console.log(`User joined personal room: ${roomName}`);
-    });
-
-    // Send support message (for those using pure socket to send)
+    // Send support message
     socket.on("send_support_message", async (data) => {
       try {
         const { support_id, message } = data;
         if (!support_id) return;
 
         const roomName = support_id.toString();
-        console.log(`[Support Socket] Received send_support_message for room: ${roomName}`);
-
         const ticket = await Ticket.findById(support_id);
+        
         if (ticket) {
           const newMessage = {
-            from: message.from || "user",
+            from: message.from || (socket.user instanceof Admin ? "admin" : "user"),
             text: message.text || "",
             timestamp: new Date()
           };
@@ -50,15 +105,13 @@ const initSocket = (httpServer) => {
           await ticket.save();
 
           const savedMessage = ticket.messages[ticket.messages.length - 1];
-          console.log(`[Support Socket] Message saved and broadcasting to: ${roomName}`);
-
-          // broadcast to room
+          
           io.to(roomName).emit("receive_support_message", {
             support_id: roomName,
             message: savedMessage
           });
 
-          // Send persistent notification if message is from admin to user
+          // Persistent notification for user
           if (newMessage.from === "admin") {
             try {
               const { sendNotification } = require("../../../utils/notificationHelper");
@@ -83,12 +136,13 @@ const initSocket = (httpServer) => {
     });
 
     socket.on("disconnect", () => {
-      console.log("Socket disconnected:", socket.id);
+      console.log("[Socket] Disconnected:", socket.id);
     });
   });
 
   return io;
 };
+
 
 
 const closeTicket = async (req, res) => {
