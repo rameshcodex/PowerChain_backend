@@ -4,6 +4,8 @@ const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { matchedData } = require("express-validator");
 const User = require("../../../models/user");
+const { createItem } = require("../../../middleware/db");
+const { handleError } = require("../../../middleware/utils");
 
 const verifyToken = async (token) => {
     try {
@@ -25,10 +27,9 @@ const verifyToken = async (token) => {
 
 const register = async (req, res) => {
     try {
-        req = matchedData(req);
-        const { name, email, password, phone, username, captcha,kycStatus } = req;
+        const data = matchedData(req);
+        const { name, email, password, phone, username, captcha, kycStatus } = data;
 
-        // 🔐 CAPTCHA CHECK (same as login)
         if (!captcha) {
             return res.status(400).json({
                 success: false,
@@ -104,9 +105,7 @@ const register = async (req, res) => {
             100000 + Math.random() * 900000
         ).toString();
 
-
-      console.log("UNVERIFIED OTP", "", otp);
-        await unVerifiedUsers.create({
+        await createItem({
             name: name,
             username: checkedName,
             email: checkedEmail,
@@ -116,14 +115,7 @@ const register = async (req, res) => {
             otpExpires: Date.now() + 5 * 60 * 1000,
             isVerified: false,
             kycStatus: kycStatus || 'Not Initiated'
-        });
-
-        // await sendOtpEmail({
-        //     checkedEmail,
-        //     otp,
-        //     username: checkedName,
-        //     temp: "register"
-        // });
+        }, unVerifiedUsers);
 
         return res.status(201).json({
             success: true,
@@ -132,12 +124,7 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            result: null,
-            message: "Registration failed"
-        });
+        handleError(res, error);
     }
 };
 

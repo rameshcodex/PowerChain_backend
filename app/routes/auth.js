@@ -25,7 +25,7 @@ const { login } = require("../controllers/auth/userOnboard/login.js");
 const { getUserProfile } = require("../controllers/auth/userOnboard/getUserProfile.js");
 const { adminRegister } = require("../controllers/admin/adminRegister");
 const { adminLogin } = require("../controllers/admin/adminLogin");
-const { generateCaptcha } = require("../middleware/utiles/generateCaptcha");
+const { generateCaptcha } = require("../middleware/utils/generateCaptcha");
 const { updateUserProfile } = require("../controllers/auth/userOnboard/updateUserProfile.js");
 const { setUpTwoFA, verifyTwoFA, disableTwoFA, loginTwoFAVerify } = require("../controllers/auth/userOnboard/twofaController.js")
 const { getAllTickets } = require("../controllers/admin/Ticket/getAllTickets");
@@ -111,7 +111,7 @@ const { getRabbitMQNotifications } = require("../controllers/auth/userOnboard/ge
 
 // const { refreshToken } = require("../controllers/auth/refreshToken");
 // const validate = require("../middleware/auth/validate");
-// const { handleValidation } = require('../middleware/utiles/handleValidation')
+// const { handleValidation } = require('../middleware/utils/handleValidation')
 // import { resetPasswordValidator } from "../controllers/auth/validator/resetPasswordValidator";
 
 

@@ -1,6 +1,6 @@
 const { checkPermissions, checkAdminPermissions } = require('../../helper')
 
-const { handleError } = require('../../middleware/utiles')
+const { handleError } = require('../../middleware/utils')
 
 /**
  * Roles authorization function called by route

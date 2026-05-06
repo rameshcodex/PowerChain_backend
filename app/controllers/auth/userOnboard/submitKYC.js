@@ -2,6 +2,8 @@ const KYC = require("../../../models/kyc");
 const User = require("../../../models/user");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { notifyKycStatusChanged } = require("../../../utils/kycNotificationService");
+const { handleError } = require("../../../middleware/utils");
+
 
 const normalizeFiles = (files) => {
     if (Array.isArray(files)) {
@@ -297,15 +299,8 @@ const submitKYC = async (req, res) => {
             data: kyc,
         });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
-
-
-
-
 
 module.exports = { submitKYC };

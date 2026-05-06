@@ -3,8 +3,7 @@ const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const axios = require("axios");
-
-
+const { handleError } = require("../../../middleware/utils");
 
 const verifyToken = async (token) => {
     try {
@@ -21,53 +20,46 @@ const verifyToken = async (token) => {
     }
 };
 
-
-
 const resendOtp = async (req, res) => {
-  console.log("FSDFDSFEWRew")
   try {
-
     const { email, captcha } = req.body;
-
-    console.log("Received resend OTP request:", req.body);
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
+    if (!captcha) {
+        return res.status(400).json({
+            success: false,
+            message: "Robot verification required",
+        });
+    }
 
+    const isHuman = await verifyToken(captcha);
+    
+    if (!isHuman) {
+        return res.status(403).json({
+            success: false,
+            message: "Captcha verification failed",
+        });
+    }
 
-       if (!captcha) {
-            return res.status(400).json({
-                success: false,
-                message: "Robot verification required",
-            });
-        }
+    const forCheck = email.trim();
 
-        const isHuman = await verifyToken(captcha);
-        console.log("Captcha verification result:", isHuman);
-        
+    const [unverifiedUser, user] = await Promise.all([
+        unVerifiedUsers.findOne({ email: forCheck }),
+        User.findOne({ email: forCheck })
+    ]);
 
-        if (!isHuman) {
-            return res.status(403).json({
-                success: false,
-                message: "Captcha verification failedxxxxxxxxxxxxx",
-            });
-        }
-
-        const forCheck = email.trim()
-
-    const user = await unVerifiedUsers.findOne({ email });
-    const user1 = await User.findOne({ email });
-
-    if (user1) {
+    if (user) {
       return res.status(400).json({
         success: false,
         result: null,
         message: "User already verified"
       });
     }
-    if (!user) {
+
+    if (!unverifiedUser) {
       return res.status(404).json({
         success: false,
         result: null,
@@ -76,23 +68,17 @@ const resendOtp = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    // const hashedOtp = crypto
-    //   .createHash("sha256")
-    //   .update(otp)
-    //   .digest("hex");
 
-    // Update OTP & expiry
-    user.otp = otp;
-    user.otpExpires = Date.now() + 5 * 60 * 1000;
-    await user.save();
+    unverifiedUser.otp = otp;
+    unverifiedUser.otpExpires = Date.now() + 5 * 60 * 1000;
+    await unverifiedUser.save();
 
-    // console.log("Resent OTP:", otp);
-    // console.log("Email:", email);
-    // console.log(user.name)
-    checkedEmail = email
-    username = user.name
-    await sendOtpEmail({ checkedEmail, otp, username, temp: "resend" });
-
+    await sendOtpEmail({ 
+        checkedEmail: email, 
+        otp, 
+        username: unverifiedUser.name, 
+        temp: "resend" 
+    });
 
     res.status(200).json({
       success: true,
@@ -101,12 +87,9 @@ const resendOtp = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      result: null,
-      error: error.message
-    });
+    handleError(res, error);
   }
 };
 
 module.exports = { resendOtp };
+

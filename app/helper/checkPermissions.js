@@ -1,6 +1,6 @@
 const User = require('../models/user')
 const Admin = require('../models/admin')
-const { itemNotFound, buildErrObject } = require('../middleware/utiles')
+const { itemNotFound, buildErrObject } = require('../middleware/utils')
 
 const isBuiltError = (e) =>
     e &&

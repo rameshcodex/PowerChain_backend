@@ -1,11 +1,14 @@
 const User = require("../../../models/user");
 const UnVerifiedUser = require("../../../models/unVerifiedUsers");
-const { matchedData } = require("express-validator")
+const { matchedData } = require("express-validator");
+const { createItem } = require("../../../middleware/db");
+const { handleError } = require("../../../middleware/utils");
 
 const verifyOtp = async (req, res) => {
   try {
-    req = matchedData(req);
-    const { email, otp } = req;
+    const data = matchedData(req);
+    const { email, otp } = data;
+    
     const unverifiedUser = await UnVerifiedUser.findOne({ email }).select('+password');
 
     if (!unverifiedUser) {
@@ -24,9 +27,7 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    if (
-      unverifiedUser.otp !== otp
-    ) {
+    if (unverifiedUser.otp !== otp) {
       return res.status(400).json({
         success: false,
         result: null,
@@ -42,7 +43,7 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    const verifiedUser = await User.create({
+    const verifiedUser = await createItem({
       name: unverifiedUser.name,
       username: unverifiedUser.username,
       phone: unverifiedUser.phone,
@@ -53,7 +54,7 @@ const verifyOtp = async (req, res) => {
       otp: unverifiedUser.otp,
       otpExpires: unverifiedUser.otpExpires,
       kycStatus: unverifiedUser.kycStatus
-    });
+    }, User);
 
     await UnVerifiedUser.findOneAndDelete({ email });
 
@@ -68,13 +69,9 @@ const verifyOtp = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      result: null,
-      message: error.message
-    });
+    handleError(res, error);
   }
 };
 
 module.exports = { verifyOtp };
+

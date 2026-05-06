@@ -1,5 +1,5 @@
 const { check } = require('express-validator');
-const { handleValidation } = require('../../../middleware/utiles/handleValidation');
+const { handleValidation } = require('../../../middleware/utils/handleValidation');
 
 const createTicketValidator = [
     check('title')

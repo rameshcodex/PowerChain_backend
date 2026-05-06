@@ -4,11 +4,11 @@ const bcrypt = require("bcryptjs");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { logger } = require("../../../../winston");
+const { handleError } = require("../../../middleware/utils");
 
 const resetPassword = async (req, res) => {
     try {
         const data = matchedData(req);
-
         const userId = req.user._id;
 
         const deviceName = req.body.deviceName || req.body.deviceType || req.headers['user-agent'] || "Unknown device";
@@ -17,9 +17,6 @@ const resetPassword = async (req, res) => {
             req.socket?.remoteAddress ||
             req.ip ||
             null;
-
-
-
 
         const user = await User.findOne({ _id: userId }).select("+password");
 
@@ -31,10 +28,8 @@ const resetPassword = async (req, res) => {
             });
         }
 
-
         const { oldPassword, password } = data;
 
-        // Only verify old password if the user already has one set (needs +password on query)
         if (user.password && user.password !== "") {
             if (!oldPassword || oldPassword === "empty") {
                 return res.status(400).json({
@@ -54,7 +49,6 @@ const resetPassword = async (req, res) => {
             }
         }
 
-        // Check if new password is same as old
         if (user.password && user.password !== "") {
             const isSamePassword = await bcrypt.compare(password, user.password);
             if (isSamePassword) {
@@ -68,7 +62,6 @@ const resetPassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         user.password = hashedPassword;
-
         await user.save();
 
         const Title = "Password Changed";
@@ -98,14 +91,9 @@ const resetPassword = async (req, res) => {
             result: null,
             message: "Password updated successfully"
         });
-    } catch (err) {
-        console.error("Failed to reset password:", err.message);
-        res.status(500).json({
-            success: false,
-            result: null,
-            message: "Failed to reset password"
-        });
+    } catch (error) {
+        handleError(res, error);
     }
-}
+};
 
 module.exports = resetPassword;

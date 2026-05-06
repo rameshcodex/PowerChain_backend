@@ -2,12 +2,12 @@ const { matchedData } = require("express-validator");
 const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
+const { handleError } = require("../../../middleware/utils");
 
 const forgetPassword = async (req, res) => {
   try {
-    req = matchedData(req);
-    const { email } = req;
-    console.log(email);
+    const data = matchedData(req);
+    const { email } = data;
 
     const user = await User.findOne({ email });
     const unVerifiedUser = await unVerifiedUsers.findOne({ email });
@@ -40,8 +40,13 @@ const forgetPassword = async (req, res) => {
     user.otp = otp;
     user.otpExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
-    const checkedEmail = user.email
-    await sendOtpEmail({ checkedEmail, otp, temp: "forgotpassword", username: user.name });
+    
+    await sendOtpEmail({ 
+        checkedEmail: user.email, 
+        otp, 
+        temp: "forgotpassword", 
+        username: user.name 
+    });
 
     return res.status(200).json({
       success: true,
@@ -49,14 +54,10 @@ const forgetPassword = async (req, res) => {
       message: "OTP sent successfully"
     });
 
-  } catch (err) {
-    console.error(" Failed to send OTP:", err.message);
-    return res.status(500).json({
-      success: false,
-      result: null,
-      message: "Failed to send OTP"
-    });
+  } catch (error) {
+    handleError(res, error);
   }
 };
 
 module.exports = { forgetPassword };
+
