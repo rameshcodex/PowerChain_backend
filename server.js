@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const passport = require('passport');
 const path = require('path');
 const i18n = require('i18n');
+const mongoose = require('mongoose');
 const initMongo = require('./config/mongo')
 const router = require('./app/routes/auth');
 const binanceRoute = require('./app/routes/tradeRoutes');
@@ -20,6 +21,7 @@ const session = require("express-session")
 const crypto = require('crypto');
 const { initSocket } = require('./app/controllers/Ticket/socket/TicketMessSocket');
 const { setupP2PSocket } = require('./app/controllers/auth/p2p/socket/p2pSocketHandler');
+const { startNotificationConsumer } = require('./app/helper/rabbitmq');
 // const { startDailyKycReminderJob } = require('./app/utils/kycNotificationService');
 
 
@@ -150,5 +152,10 @@ httpServer.listen(port, () => {
     log(`Socket.IO initialized`)
 })
 initMongo();
+mongoose.connection.once('open', () => {
+    startNotificationConsumer().catch((error) => {
+        console.error('Failed to start RabbitMQ notification consumer:', error.message);
+    });
+});
 // startDailyKycReminderJob();
 module.exports = app

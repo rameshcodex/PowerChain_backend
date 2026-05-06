@@ -194,5 +194,5 @@ const notifyKycStatusChanged = async ({ kycId, status, rejectionReason }) => {
 
 module.exports = {
     // schedulePostLoginKycReminder,
-    // notifyKycStatusChanged,
+    notifyKycStatusChanged,
 };
