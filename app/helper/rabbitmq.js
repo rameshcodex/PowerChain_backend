@@ -41,12 +41,12 @@ async function publishLoginNotification({
     const loginDeviceName = deviceName || 'Unknown device';
     const loginDeviceIPAddress = deviceIPAddress || 'Unknown IP';
 
-    return publishNotificationEvent({
+    const payload = {
         userId: userId.toString(),
         type: 'user',
         event: 'login_success',
         category: 'SECURITY',
-        eventType: 'LOGIN_SUCCssssssssssssssESS',
+        eventType: 'LOGIN_SUCCESS',
         title: 'Login Alert',
         message: `Your account was logged in successfully from ${loginDeviceName}. IP address: ${loginDeviceIPAddress}`,
         referenceId: userId.toString(),
@@ -58,7 +58,19 @@ async function publishLoginNotification({
             deviceIPAddress: loginDeviceIPAddress,
             loggedInAt: new Date().toISOString()
         }
+    };
+
+    const notification = await Notification.create(buildNotificationDocument(payload));
+    await emitNotificationToSocket(notification);
+
+    publishNotificationEvent({
+        ...payload,
+        persistedNotificationId: notification._id.toString()
+    }).catch((error) => {
+        console.error('Login notification saved but RabbitMQ publish failed:', error.message);
     });
+
+    return notification;
 }
 
 function buildNotificationDocument(event) {
@@ -82,6 +94,31 @@ function buildNotificationDocument(event) {
     };
 }
 
+async function emitNotificationToSocket(notification) {
+    const notificationUserId = notification.user || notification.userId;
+
+    if (!notificationUserId) {
+        return;
+    }
+
+    const unreadCount = await Notification.countDocuments({
+        $or: [
+            { user: notificationUserId },
+            { userId: notificationUserId.toString() },
+        ],
+        isRead: false
+    });
+    const roomName = `user_${notificationUserId.toString()}`;
+
+    try {
+        const io = getIO();
+        io.to(roomName).emit('notification', notification);
+        io.to(roomName).emit('notificationCount', { unreadCount });
+    } catch (socketError) {
+        console.error('Notification saved but socket emit failed:', socketError.message);
+    }
+}
+
 async function startNotificationConsumer(queueName = NOTIFICATION_QUEUE) {
     const connection = await amqp.connect(RABBITMQ_URL);
     const channel = await connection.createChannel();
@@ -99,24 +136,14 @@ async function startNotificationConsumer(queueName = NOTIFICATION_QUEUE) {
 
         try {
             const payload = JSON.parse(msg.content.toString());
-            const notification = await Notification.create(buildNotificationDocument(payload));
-            const notificationUserId = notification.user || notification.userId;
-            const unreadCount = await Notification.countDocuments({
-                $or: [
-                    { user: notificationUserId },
-                    { userId: notificationUserId.toString() },
-                ],
-                isRead: false
-            });
-            const roomName = `user_${notificationUserId.toString()}`;
 
-            try {
-                const io = getIO();
-                io.to(roomName).emit('notification', notification);
-                io.to(roomName).emit('notificationCount', { unreadCount });
-            } catch (socketError) {
-                console.error('RabbitMQ notification saved but socket emit failed:', socketError.message);
+            if (payload.persistedNotificationId) {
+                channel.ack(msg);
+                return;
             }
+
+            const notification = await Notification.create(buildNotificationDocument(payload));
+            await emitNotificationToSocket(notification);
 
             console.log('RabbitMQ notification stored in DB:', notification._id.toString());
             channel.ack(msg);

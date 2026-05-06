@@ -8,28 +8,36 @@ const Notification = require('../../models/notification');
 const redis = new IORedis(process.env.REDIS_URL || {
     host: process.env.REDIS_HOST || '127.0.0.1',
     port: process.env.REDIS_PORT || 6379,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 1,
+    retryStrategy: () => null,
+});
+
+let redisErrorLogged = false;
+
+redis.on('error', (error) => {
+    if (!redisErrorLogged) {
+        console.warn('Redis connection error:', error.message);
+        redisErrorLogged = true;
+    }
 });
 
 let cachedBotSettings = null;
 let lastBotCacheUpdate = 0;
 
-// const getBotThresholds = async () => {
-//     const now = Date.now();
-//     if (cachedBotSettings && (now - lastBotCacheUpdate < 60000)) {
-//         return cachedBotSettings;
-//     }
-//     try {
-//         const settings = await TradeSettingsModel.findOne({ type: 'tapTrade' });
-//         cachedBotSettings = {
-//             perMin: settings?.botDetectPerMin || 25,
-//             perSec: settings?.botDetectPerSecond || 200
-//         };
-//         lastBotCacheUpdate = now;
-//         return cachedBotSettings;
-//     } catch (e) {
-//         return { perMin: 25, perSec: 200 };
-//     }
-// };
+const getBotThresholds = async () => {
+    const now = Date.now();
+    if (cachedBotSettings && (now - lastBotCacheUpdate < 60000)) {
+        return cachedBotSettings;
+    }
+
+    cachedBotSettings = {
+        perMin: 25,
+        perSec: 200
+    };
+    lastBotCacheUpdate = now;
+    return cachedBotSettings;
+};
 
 const checkApiCall = async (req, res, next) => {
     try {

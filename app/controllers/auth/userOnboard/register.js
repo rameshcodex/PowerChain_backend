@@ -105,6 +105,10 @@ const register = async (req, res) => {
             100000 + Math.random() * 900000
         ).toString();
 
+        console.log("UNVERIFIED OTP", "", otp);
+
+
+
         await createItem({
             name: name,
             username: checkedName,
