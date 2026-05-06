@@ -4,13 +4,18 @@ const P2POrder = require("../../../models/p2pOrder");
 // const SpotOrder = require("../../../models/spotOrder");
 // const SupportTicket = require("../../../models/supportTicket");
 
-const getUserNotificationFilter = (userId, extraFilter = {}) => ({
-    $or: [
-        { user: userId },
-        { userId: userId.toString() },
-    ],
-    ...extraFilter,
-});
+const getUserNotificationFilter = (userId, extraFilter = {}) => {
+    const userFilters = [{ userId: userId.toString() }];
+
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+        userFilters.push({ user: userId });
+    }
+
+    return {
+        $or: userFilters,
+        ...extraFilter,
+    };
+};
 
 const normalizeNotificationForClient = (notification) => {
     const normalized = { ...notification };
@@ -34,6 +39,18 @@ const normalizeNotificationForClient = (notification) => {
     return normalized;
 };
 
+const getRequestUserId = (req) => req.user?._id || req.user?.id;
+
+const toPositiveInteger = (value, fallback, max) => {
+    const parsed = Number.parseInt(value, 10);
+
+    if (!Number.isInteger(parsed) || parsed < 1) {
+        return fallback;
+    }
+
+    return max ? Math.min(parsed, max) : parsed;
+};
+
 // exports.getNotifications = async (req, res) => {
 //     try {
 //         const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 });
@@ -44,39 +61,86 @@ const normalizeNotificationForClient = (notification) => {
 //     }
 // };
 
+
+
 exports.getNotifications = async (req, res) => {
     try {
-        const { status } = req.query;
+        const userId = req.query.userId || getRequestUserId(req);
 
-        let filter = getUserNotificationFilter(req.user._id);
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "userId is required"
+            });
+        }
 
-        // Apply read/unread filter
-        if (status === "read") {
+        const {
+            page,
+            limit,
+            isRead,
+            status,
+            category,
+            priority,
+            startDate,
+            endDate,
+        } = req.query;
+        const pageNumber = toPositiveInteger(page, 1);
+        const limitNumber = toPositiveInteger(limit, 20, 100);
+        const skip = (pageNumber - 1) * limitNumber;
+        const filter = getUserNotificationFilter(userId);
+
+        if (isRead === "true" || status === "read") {
             filter.isRead = true;
-        } else if (status === "unread") {
+        } else if (isRead === "false" || status === "unread") {
             filter.isRead = false;
         }
 
-        const notifications = await Notification
-            .find(filter)
-            .sort({ createdAt: -1 })
-            .lean();
+        if (category) {
+            filter.category = category.toUpperCase();
+        }
 
-        const unreadCount = await Notification.countDocuments(getUserNotificationFilter(req.user._id, {
-            isRead: false
-        }));
+        if (priority) {
+            filter.priority = priority.toUpperCase();
+        }
 
+        if (startDate || endDate) {
+            filter.createdAt = {};
 
-        res.json({
+            if (startDate) {
+                filter.createdAt.$gte = new Date(startDate);
+            }
+
+            if (endDate) {
+                filter.createdAt.$lte = new Date(endDate);
+            }
+        }
+
+        const [notifications, unreadCount, total] = await Promise.all([
+            Notification.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNumber).lean(),
+            Notification.countDocuments(getUserNotificationFilter(userId, { isRead: false })),
+            Notification.countDocuments(filter),
+        ]);
+
+        const normalizedNotifications = notifications.map(normalizeNotificationForClient);
+
+        return res.json({
             success: true,
+            data: normalizedNotifications,
             result: {
-                notifications: notifications.map(normalizeNotificationForClient),
-                unreadCount
+                notifications: normalizedNotifications,
+                unreadCount,
+                pagination: {
+                    page: pageNumber,
+                    limit: limitNumber,
+                    total,
+                    totalPages: Math.ceil(total / limitNumber),
+                },
             }
         });
 
     } catch (error) {
         console.error("Error fetching notifications:", error);
+
         res.status(500).json({
             success: false,
             message: "Server error"

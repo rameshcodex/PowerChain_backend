@@ -98,7 +98,6 @@ const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = requir
 const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
 
 const { submitKYC, updateKYCStatus, getKYC } = require("../controllers/auth/userOnboard");
-const { getRabbitMQNotifications } = require("../controllers/auth/userOnboard/getRabbitMQNotifications");
 
 
 
@@ -167,13 +166,6 @@ router.post(
 );
 
 
-//get notification rabbit
-router.get("/get-rabbitmq-notifications",
-    tokenValidator,
-    roleAuthorization(['user']),
-    trimRequest.all,
-    getRabbitMQNotifications
-);
 
 
 //USER PROFILE API ROUTES
@@ -374,7 +366,18 @@ router.get("/p2p/get-payment-types", requireAuth, getPaymentTypes);
 // router.patch("/p2p/update-payment-status", requireAuth, paymentMethodStatus);
 
 // NOTIFICATION ROUTES
-router.get("/notifications", requireAuth, getNotifications);
+router.get("/users-notifications",
+    tokenValidator,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    getNotifications
+);
+router.get("/notifications",
+    tokenValidator,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    getNotifications
+);
 router.get("/notifications/unread-count", requireAuth, getUnreadCount);
 // router.patch("/notifications/mark-as-read/:id", requireAuth, markAsRead);
 router.patch("/notifications/mark-as-read/", requireAuth, markAsRead);

@@ -179,7 +179,7 @@ const login = async (req, res) => {
             deviceName,
             deviceIPAddress,
         }).catch((err) => {
-            console.error("Failed to publish login notification:", err.message);
+            console.error("Failed to create login notification:", err.message);
         });
 
         // 2FA CHECK
@@ -229,4 +229,3 @@ const login = async (req, res) => {
 };
 
 module.exports = { login };
-
