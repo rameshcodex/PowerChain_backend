@@ -3,7 +3,6 @@ const User = require("../../../models/user");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { notifyKycStatusChanged } = require("../../../utils/kycNotificationService");
 
-
 const updateKYCStatus = async (req, res) => {
     try {
         const { kycId } = req.params;
@@ -19,20 +18,9 @@ const updateKYCStatus = async (req, res) => {
             });
         }
 
-        const kyc = await KYC.findByIdAndUpdate(
-            kycId,
-            { status: nextStatus },
-            { new: true, runValidators: true }
-        );
+        const kyc = await updateItem(kycId, KYC, { status: nextStatus });
 
-        if (!kyc) {
-            return res.status(404).json({
-                success: false,
-                message: "KYC not found",
-            });
-        }
-
-        await User.findByIdAndUpdate(kyc.userId, { kycStatus: nextStatus });
+        await updateItem(kyc.userId, User, { kycStatus: nextStatus });
         await notifyKycStatusChanged({ kycId: kyc._id, status: nextStatus, rejectionReason });
 
         return res.status(200).json({
@@ -41,10 +29,7 @@ const updateKYCStatus = async (req, res) => {
             data: kyc,
         });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 

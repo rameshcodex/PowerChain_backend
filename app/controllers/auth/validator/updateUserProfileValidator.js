@@ -1,7 +1,7 @@
 
 const { check } = require('express-validator');
 // const { isNumeric, isLength } = require('validator');
-const { handleValidation } = require('../../../middleware/utiles/handleValidation');
+const { handleValidation } = require('../../../middleware/utils/handleValidation');
 
 const updateUserProfileValidator = [
     check('name')

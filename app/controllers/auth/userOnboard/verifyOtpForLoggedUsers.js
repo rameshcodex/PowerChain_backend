@@ -4,14 +4,13 @@ const bcrypt = require("bcryptjs");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { logger } = require("../../../../winston");
-
+const { handleError } = require("../../../middleware/utils");
 
 const verifyOtpForLoggedUsers = async (req, res) => {
     try {
-
-        req = matchedData(req);
-
-        const { email, otp, password } = req;
+        const data = matchedData(req);
+        const { email, otp, password } = data;
+        
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -44,13 +43,11 @@ const verifyOtpForLoggedUsers = async (req, res) => {
             });
         }
 
-
         const hashedPassword = await bcrypt.hash(password, 10);
         user.password = hashedPassword;
         user.isVerified = true;
         user.otp = null;
         user.otpExpires = null;
-
 
         await user.save();
 
@@ -79,19 +76,8 @@ const verifyOtpForLoggedUsers = async (req, res) => {
             result: null,
             message: "Password reset successfully"
         });
-
-    
-
-
-
-    } catch (err) {
-
-        console.error("Failed to change password:", err.message);
-        res.status(500).json({
-            success: false,
-            result: null,
-            message: "Failed to change password"
-        });
+    } catch (error) {
+        handleError(res, error);
     }
 };
 

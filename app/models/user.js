@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const mongoosePaginate = require('mongoose-paginate-v2')
+
 
 
 const userSchema = new mongoose.Schema({
@@ -27,6 +29,8 @@ const userSchema = new mongoose.Schema({
 
     isVerified: { type: Boolean, default: false },
     role: { type: String, default: "user" },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active', index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
 
     deviceDetails: {
         deviceIPAddress: String,
@@ -35,9 +39,10 @@ const userSchema = new mongoose.Schema({
     kycStatus: {
         type: String,
         enum: ['Not Initiated', 'pending', 'verified', 'rejected'],
-        default: 'Not Initiated'
+        default: 'Not Initiated',
+        index: true
     },
-    favoritePairsOKX: [{ type: String , default: [] }],
+    favoritePairsOKX: [{ type: String, default: [] }],
     futureFavoritePairsOKX: [{ type: String, default: [] }],
 
 },
@@ -45,6 +50,11 @@ const userSchema = new mongoose.Schema({
         timestamps: true,
     })
 
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ createdAt: -1 });
+
+userSchema.plugin(mongoosePaginate)
 const User = mongoose.model('User', userSchema);
 
 module.exports = User

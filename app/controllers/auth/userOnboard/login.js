@@ -7,6 +7,7 @@ const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 // const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
+const { handleError } = require("../../../middleware/utils");
 
 const verifyToken = async (token) => {
     try {
@@ -82,18 +83,13 @@ const login = async (req, res) => {
                 { username: forCheck }
             ]
         }).select("+password");
-        console.log("User found:", user);
+
         const unVerifiedUser = await unVerifiedUsers.findOne({
             $or: [
                 { email: forCheck },
                 { username: forCheck }
             ]
         });
-        console.log("Unverified User found:", unVerifiedUser);
-
-        console.log("unUserData:", unVerifiedUser);
-        console.log("userData:", user);
-
 
         if (unVerifiedUser) {
             return res.status(400).json({
@@ -113,6 +109,13 @@ const login = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
+            });
+        }
+
+        if (user.status === 'inactive') {
+            return res.status(403).json({
+                success: false,
+                message: "admin blocked your account"
             });
         }
 
@@ -168,7 +171,7 @@ const login = async (req, res) => {
             console.warn("Login notification skipped: user has no email address");
         }
 
-        // 2FA CHECK (IMPORTANT PART)
+        // 2FA CHECK
         if (user.twoFAEnabled === true) {
             const tempToken = jwt.sign(
                 { userId: user._id, twoFA: true },
@@ -184,7 +187,7 @@ const login = async (req, res) => {
             });
         }
 
-        const payload = { userId: user._id }
+        const payload = { userId: user._id };
 
         const accessToken = jwt.sign(
             payload,
@@ -209,14 +212,10 @@ const login = async (req, res) => {
             message: "Login successful"
         });
 
+    } catch (error) {
+        handleError(res, error);
     }
-    catch (error) {
-        return res.status(500).json({
-            success: false,
-            result: null,
-            message: error.message
-        });
-    }
-}
+};
 
 module.exports = { login };
+

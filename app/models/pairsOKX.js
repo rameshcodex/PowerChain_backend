@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const pairsOKX = new mongoose.Schema(
     {
@@ -90,7 +91,7 @@ const pairsOKX = new mongoose.Schema(
             type: [String],
             default: ["OKX"],
             index: true,
-        },
+        }
     },
     {
         timestamps: true,
@@ -108,5 +109,7 @@ pairsOKX.index(
         unique: true,
     }
 );
+
+pairsOKX.plugin(mongoosePaginate);
 
 module.exports = mongoose.model("okxpairs", pairsOKX);

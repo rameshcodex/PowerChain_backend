@@ -5,8 +5,7 @@ const jwt = require("jsonwebtoken");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 const { logger } = require("../../../../winston");
-
-
+const { handleError } = require("../../../middleware/utils");
 
 const setUpTwoFA = async (req, res) => {
   try {
@@ -19,7 +18,6 @@ const setUpTwoFA = async (req, res) => {
       });
     }
 
-    // Already enabled
     if (user.twoFAEnabled === true) {
       return res.status(400).json({
         success: false,
@@ -31,13 +29,9 @@ const setUpTwoFA = async (req, res) => {
     const issuer = "DemoExchange";
     const label = `${issuer}:${user.email}`;
 
-    // Reuse secret if exists but not yet enabled
     if (user.twoFASecret && user.twoFAEnabled === false) {
-      console.log("Reusing existing 2FA secret (setup in progress)");
       base32Secret = user.twoFASecret;
     } else {
-      // Generate new secret
-      console.log("Generating new 2FA secret");
       const generated = speakeasy.generateSecret({
         length: 20,
         name: label,
@@ -54,8 +48,6 @@ const setUpTwoFA = async (req, res) => {
     const encodedEmail = encodeURIComponent(user.email);
     const otpauth_url = `otpauth://totp/${encodedIssuer}:${encodedEmail}?secret=${base32Secret}&issuer=${encodedIssuer}`;
 
-    console.log("Generated URL:", otpauth_url);
-
     const qrCodeDataURL = await QRCode.toDataURL(otpauth_url);
 
     return res.status(200).json({
@@ -68,18 +60,10 @@ const setUpTwoFA = async (req, res) => {
       message: "2FA setup initiated",
     });
   } catch (error) {
-    console.error("Setup 2FA error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to setup 2FA",
-    });
+    handleError(res, error);
   }
 };
 
-
-
-
-// Verify OTP for initial setup (Enables 2FA)
 const verifyTwoFA = async (req, res) => {
   try {
     const { otp } = req.body;
@@ -124,14 +108,10 @@ const verifyTwoFA = async (req, res) => {
       message: "2FA enabled successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to verify 2FA",
-    });
+    handleError(res, error);
   }
 };
 
-// Verify OTP during Login (Returns final tokens)
 const loginTwoFAVerify = async (req, res) => {
   try {
     const { otp } = req.body;
@@ -178,20 +158,14 @@ const loginTwoFAVerify = async (req, res) => {
       message: "2FA verified successfully",
     });
   } catch (error) {
-    console.error("Login 2FA verification error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to verify 2FA",
-    });
+    handleError(res, error);
   }
 };
-
 
 const disableTwoFA = async (req, res) => {
   try {
     const { otp } = req.body;
 
-    //  Check OTP
     if (!otp) {
       return res.status(400).json({
         success: false,
@@ -199,7 +173,6 @@ const disableTwoFA = async (req, res) => {
       });
     }
 
-    //  Check if 2FA is enabled
     if (!req.user.twoFAEnabled || !req.user.twoFASecret) {
       return res.status(400).json({
         success: false,
@@ -207,7 +180,6 @@ const disableTwoFA = async (req, res) => {
       });
     }
 
-    //  Verify OTP
     const verified = speakeasy.totp.verify({
       secret: req.user.twoFASecret,
       encoding: "base32",
@@ -222,7 +194,6 @@ const disableTwoFA = async (req, res) => {
       });
     }
 
-    //  Disable & clear secret
     req.user.twoFAEnabled = false;
     await req.user.save();
 
@@ -242,16 +213,9 @@ const disableTwoFA = async (req, res) => {
       message: "2FA disabled successfully",
     });
   } catch (error) {
-    console.error("Disable 2FA error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to disable 2FA",
-    });
+    handleError(res, error);
   }
 };
-
-module.exports = disableTwoFA;
-
 
 module.exports = {
   setUpTwoFA,

@@ -8,32 +8,34 @@ const userSchema = new mongoose.Schema({
         type: String,
 
     },
-    username: { 
-        type: String, 
-        unique: true 
+    username: {
+        type: String,
+        unique: true
     },
-    email: { type: String, 
-        unique: true 
+    email: {
+        type: String,
+        unique: true
     },
-    phone: { type: String, 
-        unique: true 
+    phone: {
+        type: String,
+        unique: true
     },
     password: {
         type: String,
         required: true,
         select: false
     },
-     otp: String,
+    otp: String,
     otpExpires: Date,
     isVerified:
-     { 
+    {
         type: Boolean,
         default: false
-     },
+    },
 
-         kycStatus: {
+    kycStatus: {
         type: String,
-         enum: ['Not Initiated', 'pending', 'verified', 'rejected'],
+        enum: ['Not Initiated', 'pending', 'verified', 'rejected'],
         default: 'Not Initiated'
     },
 
