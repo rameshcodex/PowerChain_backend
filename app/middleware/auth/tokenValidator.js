@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../../models/user");
+const Admin = require("../../models/admin");
+
 
 const extractBearer = (authorizationHeader) => {
   if (!authorizationHeader || typeof authorizationHeader !== "string") return null;
@@ -41,18 +43,21 @@ const tokenValidator = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(decoded.userId);
-    if (!user) {
+
+    let account = await User.findById(decoded.userId);
+    if (!account) {
+      account = await Admin.findById(decoded.userId);
+    }
+
+    if (!account) {
       return res.status(401).json({
         success: false,
         result: null,
-        message: "User no longer exists"
+        message: "Account no longer exists",
       });
     }
 
-    // const token2 = refreshToken()
-
-    req.user = user;
+    req.user = account;
     next();
 
   } catch (err) {

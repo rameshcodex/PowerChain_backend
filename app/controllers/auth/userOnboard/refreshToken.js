@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../../../models/user");
+const { handleError } = require("../../../middleware/utils");
 
 const refreshToken = async (req, res) => {
     try {
@@ -41,13 +42,10 @@ const refreshToken = async (req, res) => {
             message: "Access token refreshed"
         });
 
-    } catch (err) {
-        return res.status(401).json({
-            success: false,
-            result: null,
-            mesage: "Invalid refresh token"
-        });
+    } catch (error) {
+        handleError(res, error);
     }
 };
 
 module.exports = { refreshToken };
+

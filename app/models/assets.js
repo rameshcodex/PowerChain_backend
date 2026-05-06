@@ -27,8 +27,11 @@ const assetsSchema = new mongoose.Schema({
         timestamps: true
     })
 
+assetsSchema.index({ symbol: 1 });
+assetsSchema.index({ status: 1 });
+
 const assets = mongoose.model("assets", assetsSchema);
 
-module.exports = assets
+module.exports = assets;
 
 

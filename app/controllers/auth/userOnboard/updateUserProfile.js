@@ -1,11 +1,11 @@
 const User = require("../../../models/user");
+const { updateItem } = require("../../../middleware/db");
+const { handleError } = require("../../../middleware/utils");
 
 const updateUserProfile = async (req, res) => {
     try {
-
         const userId = req.user._id;
         const { email, phone, username, name, country, telegramId, telegramUsername } = req.body;
-        // const { profileImage } = req.files;
 
         const user = await User.findById(userId);
         if (!user) {
@@ -27,42 +27,32 @@ const updateUserProfile = async (req, res) => {
             }
         }
 
-        const updatedUser = await User.findOneAndUpdate(
-            { _id: userId },
-            {
-                $set: {
-                    email,
-                    username,
-                    phone,
-                    name,
-                    country,
-                    telegramId,
-                    telegramUsername
-                },
-            },
-            { new: true }
-        ).select("-password");
-        if (!updatedUser) {
-            return res.status(404).json({
-                success: false,
-                result: null,
-                message: "User not found"
-            });
-        }
+        const payload = {
+            email,
+            username,
+            phone,
+            name,
+            country,
+            telegramId,
+            telegramUsername
+        };
+
+        const updatedUser = await updateItem(userId, User, payload);
+
+        // Remove password from response if somehow it got included
+        const responseData = updatedUser.toObject();
+        delete responseData.password;
 
         res.status(200).json({
             success: true,
-            result: updatedUser,
+            result: responseData,
             message: "Profile updated successfully"
         });
 
-    } catch (err) {
-        res.status(500).json({
-            success: false,
-            result: null,
-            message: "Failed to update profile"
-        });
+    } catch (error) {
+        handleError(res, error);
     }
 }
 
 module.exports = { updateUserProfile };
+

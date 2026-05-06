@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { removeExtensionFromFile } = require('../middleware/utiles')
+const { removeExtensionFromFile } = require('../middleware/utils')
 
 const modelsPath = __dirname
 

@@ -13,29 +13,30 @@ const getKYC = async (req, res) => {
             });
         }
 
-        const kyc = await KYC.findOne({ userId });
-
-        if (!kyc) {
+        try {
+            const kyc = await getItem({ userId }, KYC);
             return res.status(200).json({
                 success: true,
-                message: "KYC not submitted",
-                kycStatus: "Not Initiated",
-                data: null,
+                message: "KYC fetched successfully",
+                kycStatus: kyc.status,
+                data: kyc,
             });
+        } catch (err) {
+            // If item is not found, return the "not submitted" response
+            if (err.message === 'NOT_FOUND') {
+                return res.status(200).json({
+                    success: true,
+                    message: "KYC not submitted",
+                    kycStatus: "Not Initiated",
+                    data: null,
+                });
+            }
+            throw err;
         }
-
-        return res.status(200).json({
-            success: true,
-            message: "KYC fetched successfully",
-            kycStatus: kyc.status,
-            data: kyc,
-        });
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 
 module.exports = { getKYC };
+

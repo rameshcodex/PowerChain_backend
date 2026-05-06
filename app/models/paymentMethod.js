@@ -68,4 +68,7 @@ const paymentMethodSchema = new mongoose.Schema(
   }
 );
 
+paymentMethodSchema.index({ userId: 1 });
+paymentMethodSchema.index({ status: 1 });
+
 module.exports = mongoose.model("PaymentMethod", paymentMethodSchema);

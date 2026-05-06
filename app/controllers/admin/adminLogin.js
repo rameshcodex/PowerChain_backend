@@ -41,6 +41,13 @@ const adminLogin = async (req, res) => {
                 message: "Admin not found"
             });
         }
+
+        if (admin.status === 'inactive') {
+            return res.status(403).json({
+                success: false,
+                message: "Admin account is deactivated"
+            });
+        }
         const isMatch = await bcrypt.compare(password, admin.password);
 
         if (!isMatch) {
