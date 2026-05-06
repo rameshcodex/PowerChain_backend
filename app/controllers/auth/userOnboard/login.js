@@ -4,6 +4,7 @@ const { matchedData } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
+const { publishLoginNotification } = require("../../../helper/rabbitmq");
 // const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
@@ -152,21 +153,31 @@ const login = async (req, res) => {
         };
         await user.save();
 
-        const checkedEmail = user.email;
-        if (checkedEmail) {
-            sendOtpEmail({
-                checkedEmail,
-                username: user.name || user.username,
-                temp: "login_notification",
-                subject: "Login Alert",
-                deviceName,
-                deviceIPAddress,
-            }).catch((err) => {
-                console.error("Failed to send login notification email:", err.message);
-            });
-        } else {
-            console.warn("Login notification skipped: user has no email address");
-        }
+        // const checkedEmail = user.email;
+        // if (checkedEmail) {
+        //     sendOtpEmail({
+        //         checkedEmail,
+        //         username: user.name || user.username,
+        //         temp: "login_notification",
+        //         subject: "Login Alert",
+        //         deviceName,
+        //         deviceIPAddress,
+        //     }).catch((err) => {
+        //         console.error("Failed to send login notification email:", err.message);
+        //     });
+        // } else {
+        //     console.warn("Login notification skipped: user has no email address");
+        // }
+
+        publishLoginNotification({
+            userId: user._id,
+            username: user.name || user.username,
+            email: user.email,
+            deviceName,
+            deviceIPAddress,
+        }).catch((err) => {
+            console.error("Failed to publish login notification:", err.message);
+        });
 
         // 2FA CHECK (IMPORTANT PART)
         if (user.twoFAEnabled === true) {

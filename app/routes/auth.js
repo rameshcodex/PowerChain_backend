@@ -98,6 +98,7 @@ const { getBinanceMarketDataForSpot, getOrderBook, getTickerForSymbol } = requir
 const { resendotpValidator } = require("../controllers/auth/validator/resendotpValidator.js");
 
 const { submitKYC, updateKYCStatus, getKYC } = require("../controllers/auth/userOnboard");
+const { getRabbitMQNotifications } = require("../controllers/auth/userOnboard/getRabbitMQNotifications");
 
 
 
@@ -158,11 +159,20 @@ router.post(
     submitKYC
 );
 
-router.patch(
+router.post(
     "/admin/kyc/:kycId/status",
     tokenValidator,
-    roleAuthorization(['admin', 'superadmin', 'subadmin']),
+    roleAuthorization(['admin', 'subadmin']),
     updateKYCStatus
+);
+
+
+//get notification rabbit
+router.get("/get-rabbitmq-notifications",
+    tokenValidator,
+    roleAuthorization(['user']),
+    trimRequest.all,
+    getRabbitMQNotifications
 );
 
 

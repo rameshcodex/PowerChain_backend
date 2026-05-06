@@ -5,12 +5,13 @@ const notificationSchema = new mongoose.Schema(
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+        },
+        userId: {
+            type: String,
         },
         type: {
             type: String,
             enum: ["p2p", "spot", "support", "user", "fund", "kyc"],
-            required: true,
         },
         event: {
             type: String,
@@ -26,6 +27,7 @@ const notificationSchema = new mongoose.Schema(
                 "support_message",
                 "support_created",
                 "password_changed",
+                "login_success",
                 "2fa_enabled",
                 "2fa_disabled",
                 "withdrawal_initiated",
@@ -36,7 +38,12 @@ const notificationSchema = new mongoose.Schema(
                 "kyc_approved",
                 "kyc_rejected"
             ],
-            required: true,
+        },
+        category: {
+            type: String,
+        },
+        eventType: {
+            type: String,
         },
         title: {
             type: String,
@@ -51,6 +58,24 @@ const notificationSchema = new mongoose.Schema(
         isRead: {
             type: Boolean,
             default: false,
+        },
+        priority: {
+            type: String,
+        },
+        action: {
+            type: mongoose.Schema.Types.Mixed,
+            default: { type: "NONE" },
+        },
+        data: {
+            type: mongoose.Schema.Types.Mixed,
+        },
+        deliveries: {
+            type: Array,
+            default: [],
+        },
+        expiresAt: {
+            type: Date,
+            default: null,
         },
     },
     { timestamps: true }

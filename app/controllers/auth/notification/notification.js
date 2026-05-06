@@ -4,6 +4,36 @@ const P2POrder = require("../../../models/p2pOrder");
 // const SpotOrder = require("../../../models/spotOrder");
 // const SupportTicket = require("../../../models/supportTicket");
 
+const getUserNotificationFilter = (userId, extraFilter = {}) => ({
+    $or: [
+        { user: userId },
+        { userId: userId.toString() },
+    ],
+    ...extraFilter,
+});
+
+const normalizeNotificationForClient = (notification) => {
+    const normalized = { ...notification };
+
+    if (!normalized.user && normalized.userId) {
+        normalized.user = normalized.userId;
+    }
+
+    if (!normalized.type && normalized.category === "SECURITY") {
+        normalized.type = "user";
+    }
+
+    if (!normalized.event && normalized.eventType === "LOGIN_SUCCESS") {
+        normalized.event = "login_success";
+    }
+
+    if (!normalized.referenceId) {
+        normalized.referenceId = normalized.userId || normalized.user?.toString?.() || null;
+    }
+
+    return normalized;
+};
+
 // exports.getNotifications = async (req, res) => {
 //     try {
 //         const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 });
@@ -18,7 +48,7 @@ exports.getNotifications = async (req, res) => {
     try {
         const { status } = req.query;
 
-        let filter = { user: req.user._id };
+        let filter = getUserNotificationFilter(req.user._id);
 
         // Apply read/unread filter
         if (status === "read") {
@@ -29,17 +59,20 @@ exports.getNotifications = async (req, res) => {
 
         const notifications = await Notification
             .find(filter)
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .lean();
 
-        const unreadCount = await Notification.countDocuments({
-            user: req.user._id,
+        const unreadCount = await Notification.countDocuments(getUserNotificationFilter(req.user._id, {
             isRead: false
-        });
+        }));
 
 
         res.json({
             success: true,
-            result: {notifications, unreadCount}
+            result: {
+                notifications: notifications.map(normalizeNotificationForClient),
+                unreadCount
+            }
         });
 
     } catch (error) {
@@ -151,7 +184,7 @@ exports.markAsRead = async (req, res) => {
         // 🔹 CASE 1: No ID → Mark ALL
         if (!id) {
             await Notification.updateMany(
-                { user: req.user._id, isRead: false },
+                getUserNotificationFilter(req.user._id, { isRead: false }),
                 { isRead: true }
             );
 
@@ -173,9 +206,9 @@ exports.markAsRead = async (req, res) => {
             }
 
             const notification = await Notification.findOneAndUpdate(
-                { _id: singleId, user: req.user._id },
+                { _id: singleId, ...getUserNotificationFilter(req.user._id) },
                 { isRead: true },
-                { new: true }
+                { new: true, lean: true }
             );
 
             if (!notification) {
@@ -185,7 +218,7 @@ exports.markAsRead = async (req, res) => {
             return res.json({
                 success: true,
                 message: "Notification marked as read",
-                result: notification
+                result: normalizeNotificationForClient(notification)
             });
         }
 
@@ -199,7 +232,7 @@ exports.markAsRead = async (req, res) => {
         }
 
         await Notification.updateMany(
-            { _id: { $in: validIds }, user: req.user._id },
+            { _id: { $in: validIds }, ...getUserNotificationFilter(req.user._id) },
             { isRead: true }
         );
 
@@ -248,7 +281,10 @@ exports.markAsRead = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
     try {
         const notificationId = req.params.id;
-        const notification = await Notification.findOneAndDelete({ _id: notificationId, user: req.user._id });
+        const notification = await Notification.findOneAndDelete({
+            _id: notificationId,
+            ...getUserNotificationFilter(req.user._id)
+        });
         if (!notification) {
             return res.status(404).json({ message: "Notification not found" });
         }
@@ -261,7 +297,7 @@ exports.deleteNotification = async (req, res) => {
 
 exports.clearNotifications = async (req, res) => {
     try {
-        await Notification.deleteMany({ user: req.user._id });
+        await Notification.deleteMany(getUserNotificationFilter(req.user._id));
         res.json({ message: "All notifications cleared" });
     } catch (error) {
         console.error("Error clearing notifications:", error);
@@ -271,10 +307,9 @@ exports.clearNotifications = async (req, res) => {
 
 exports.getUnreadCount = async (req, res) => {
     try {
-        const unreadCount = await Notification.countDocuments({
-            user: req.user._id,
+        const unreadCount = await Notification.countDocuments(getUserNotificationFilter(req.user._id, {
             isRead: false
-        });
+        }));
 
         return res.json({
             success: true,
@@ -296,8 +331,11 @@ exports.getNotificationsByType = async (req, res) => {
         if (!["p2p", "spot", "support"].includes(type)) {
             return res.status(400).json({ message: "Invalid notification type" });
         }
-        const notifications = await Notification.find({ user: req.user._id, type }).sort({ createdAt: -1 });
-        res.json(notifications);
+        const notifications = await Notification
+            .find(getUserNotificationFilter(req.user._id, { type }))
+            .sort({ createdAt: -1 })
+            .lean();
+        res.json(notifications.map(normalizeNotificationForClient));
     } catch (error) {
         console.error("Error fetching notifications by type:", error);
         res.status(500).json({ message: "Server error" });
