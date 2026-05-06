@@ -1,11 +1,13 @@
 const Admin = require("../../models/admin");
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken");
+const { checkBodyString } = require("../../middleware/db");
 
 
 const adminLogin = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = checkBodyString(req, "email");
+        const password = checkBodyString(req, "password");
 
         if (!email || !password) {
             return res.status(400).json({

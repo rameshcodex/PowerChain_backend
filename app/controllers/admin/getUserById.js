@@ -1,15 +1,13 @@
 const User = require("../../models/user");
-const { getItems, getItem, updateItem, deleteItem, checkQueryString } = require("../../middleware/db");
+const { getItem, checkBodyString } = require("../../middleware/db");
 const { handleError } = require("../../middleware/utils");
-
-
 
 /**
  * Get single user details by ID
  */
 const getUserById = async (req, res) => {
     try {
-        const { id } = req.query;
+        const id = checkBodyString(req, "id");
 
         if (!id) {
             return res.status(400).json({

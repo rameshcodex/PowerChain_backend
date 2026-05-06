@@ -1,9 +1,12 @@
 const Admin = require("../../models/admin")
 const bcrypt = require("bcryptjs")
+const { checkBodyString } = require("../../middleware/db");
 
 const adminRegister = async (req, res) => {
   try {
-    const { name, email, password } = req.body
+    const name = checkBodyString(req, "name");
+    const email = checkBodyString(req, "email");
+    const password = checkBodyString(req, "password");
 
     const user = await Admin.findOne({ email })
     if (user) {

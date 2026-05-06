@@ -1,5 +1,5 @@
 const User = require("../../models/user");
-const { getItems, getItem, updateItem, deleteItem, checkQueryString } = require("../../middleware/db");
+const { updateItem, checkBodyString } = require("../../middleware/db");
 const { handleError } = require("../../middleware/utils");
 
 
@@ -9,15 +9,8 @@ const { handleError } = require("../../middleware/utils");
  */
 const updateUserStatus = async (req, res) => {
     try {
-        const { id } = req.query;
-        const { status } = req.body;
-
-        if (!['active', 'inactive'].includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid status. Must be 'active' or 'inactive'."
-            });
-        }
+        const id = checkBodyString(req, "id");
+        const status = req.body?.status || "";
 
         const user = await updateItem(id, User, { status });
 

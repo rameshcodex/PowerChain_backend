@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { handleError } = require("../../../middleware/utils");
 
 const OKX_BASE_URL = process.env.OKX_API_URL || "https://www.okx.com";
 
@@ -44,12 +45,7 @@ const getKlineOKX = async (req, res) => {
       message: "Kline fetched successfully",
     });
   } catch (error) {
-    console.error("OKX Kline Error:", error.message);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch kline data",
-    });
+    handleError(res, error);
   }
 };
 

@@ -1,5 +1,6 @@
 const { buildSort } = require('./buildSort')
 const { checkQueryString } = require('./checkQueryString')
+const { checkBodyString } = require('./checkBodyString')
 const { cleanPaginationID } = require('./cleanPaginationID')
 const { createItem } = require('./createItem')
 const { deleteItem } = require('./deleteItem')
@@ -13,6 +14,7 @@ const createNotification = require('./createNotification')
 module.exports = {
   buildSort,
   checkQueryString,
+  checkBodyString,
   cleanPaginationID,
   createItem,
   deleteItem,
@@ -23,3 +25,4 @@ module.exports = {
   updateItem,
   createNotification
 }
+

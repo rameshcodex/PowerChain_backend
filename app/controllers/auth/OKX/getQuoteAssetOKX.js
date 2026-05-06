@@ -1,4 +1,5 @@
 const PairsOKX = require("../../../models/pairsOKX");
+const { handleError } = require("../../../middleware/utils");
 
 const getQuoteAssetsOKX = async (req, res) => {
     try {
@@ -24,13 +25,7 @@ const getQuoteAssetsOKX = async (req, res) => {
             message: "Quote assets fetched successfully",
         });
     } catch (error) {
-        console.error("getQuoteAssetsOKX error:", error.message);
-
-        return res.status(500).json({
-            success: false,
-            result: null,
-            message: "Failed to fetch quote assets",
-        });
+        handleError(res, error);
     }
 };
 

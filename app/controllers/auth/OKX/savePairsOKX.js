@@ -1,7 +1,8 @@
 const axios = require("axios");
 const PairsOKX = require("../../../models/pairsOKX");
 require("dotenv").config();
-const {getDecimalPrecision} = require("../helpers.js")
+const { getDecimalPrecision } = require("../helpers.js");
+const { handleError } = require("../../../middleware/utils");
 
 const OKX_BASE_URL = process.env.OKX_API_URL || "https://www.okx.com";
 
@@ -95,12 +96,7 @@ const savePairsOKX = async (req, res) => {
             inserted: result.upsertedCount || 0,
         });
     } catch (error) {
-        console.error("OKX Sync Error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        handleError(res, error);
     }
 };
 

@@ -1,5 +1,6 @@
 const axios = require("axios");
 const PairsOKX = require("../../../models/pairsOKX");
+const { handleError } = require("../../../middleware/utils");
 
 const OKX_BASE_URL = process.env.OKX_API_URL || "https://www.okx.com";
 
@@ -115,13 +116,7 @@ const getTopPairsOKX = async (req, res) => {
       message: "Top OKX pairs fetched successfully",
     });
   } catch (error) {
-    console.error("OKX top pairs error:", error.message);
-
-    return res.status(500).json({
-      success: false,
-      result: null,
-      message: "Failed to fetch top pairs",
-    });
+    handleError(res, error);
   }
 };
 

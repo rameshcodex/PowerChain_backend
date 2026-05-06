@@ -1,5 +1,5 @@
 const User = require("../../models/user");
-const { getItems, getItem, updateItem, deleteItem, checkQueryString } = require("../../middleware/db");
+const { deleteItem, checkBodyString } = require("../../middleware/db");
 const { handleError } = require("../../middleware/utils");
 
 
@@ -8,7 +8,7 @@ const { handleError } = require("../../middleware/utils");
  */
 const deleteUser = async (req, res) => {
     try {
-        const { id } = req.query;
+        const id = checkBodyString(req, "id");
 
         await deleteItem(id, User);
 

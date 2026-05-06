@@ -1,5 +1,6 @@
 const User = require("../../../models/user");
 const PairsOKX = require("../../../models/pairsOKX");
+const { handleError } = require("../../../middleware/utils");
 
 const addFavoritePairOKX = async (req, res) => {
     try {
@@ -42,13 +43,7 @@ const addFavoritePairOKX = async (req, res) => {
             message: "Pair added to favorites",
         });
     } catch (error) {
-        console.error("addFavoritePairOKX error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to add favorite",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        handleError(res, error);
     }
 };
 
@@ -79,13 +74,7 @@ const removeFavoritePairOKX = async (req, res) => {
             message: "Pair removed from favorites",
         });
     } catch (error) {
-        console.error("removeFavoritePairOKX error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to remove favorite",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        handleError(res, error);
     }
 };
 
@@ -131,13 +120,7 @@ const getFavoritePairsOKX = async (req, res) => {
             message: "Favorite pairs fetched successfully",
         });
     } catch (error) {
-        console.error("getFavoritePairsOKX error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch favorites",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        handleError(res, error);
     }
 };
 

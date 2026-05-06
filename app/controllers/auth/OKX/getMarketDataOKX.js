@@ -1,5 +1,6 @@
 const axios = require("axios");
 const PairsOKX = require("../../../models/pairsOKX");
+const { handleError } = require("../../../middleware/utils");
 
 const OKX_BASE_URL = process.env.OKX_API_URL || "https://www.okx.com";
 
@@ -117,12 +118,7 @@ const getOKXMarketData = async (req, res) => {
             message: "Market data fetched successfully",
         });
     } catch (error) {
-        console.error("OKX market error:", error.message);
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch market data",
-        });
+        handleError(res, error);
     }
 };
 

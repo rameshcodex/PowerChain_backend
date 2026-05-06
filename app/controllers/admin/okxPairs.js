@@ -1,20 +1,32 @@
 const OkxPair = require("../../models/pairsOKX");
 const { handleError } = require("../../middleware/utils");
-const { getItems, checkQueryString } = require("../../middleware/db");
+const { getItems, checkBodyString } = require("../../middleware/db");
 
 /**
  * Get all OKX pairs with pagination and filters
  */
 const getAllOkxPairs = async (req, res) => {
     try {
-        const query = await checkQueryString(req.query);
-        const status = req.query.status; // 'active' or 'inactive'
-        const type = req.query.type; // 'spot' or 'future'
+        const body = req.body || {};
+        const query = await checkBodyString(body);
+        const status = body.status; // 'active' or 'inactive'
+        const type = body.type; // 'spot' or 'future'
+        const search = body.search || "";
 
         if (status === 'active') query.status = true;
         if (status === 'inactive') query.status = false;
         
         if (type) query.type = type;
+
+        // Custom search implementation for OKX pairs
+        if (search.trim()) {
+            const searchRegex = { $regex: search.trim(), $options: "i" };
+            query.$or = [
+                { symbol: searchRegex },
+                { baseAsset: searchRegex },
+                { quoteAsset: searchRegex }
+            ];
+        }
 
         res.status(200).json(await getItems(req, OkxPair, query));
     } catch (error) {
@@ -22,13 +34,18 @@ const getAllOkxPairs = async (req, res) => {
     }
 };
 
+
+
 /**
  * Update OKX pairs status (single, multiple, or all)
  */
 const updateOkxPairStatus = async (req, res) => {
     try {
-        const { status, ids, all, type } = req.body;
-        const { id } = req.query;
+        const status = checkBodyString(req, "status");
+        const ids = checkBodyString(req, "ids");
+        const all = checkBodyString(req, "all");
+        const type = checkBodyString(req, "type");
+        const id = checkBodyString(req, "id");
 
         // Determine the boolean status
         const isActive = status === 'active' || status === true;
