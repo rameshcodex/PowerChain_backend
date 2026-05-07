@@ -65,7 +65,7 @@ router.post(
 /**
  * OKX Pairs Management Routes
  */
-router.get(
+router.post(
     "/okx-pairs",
     tokenValidator,
     roleAuthorization(['admin', 'superadmin']),

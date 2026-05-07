@@ -57,7 +57,7 @@ exports.googleLogin = async (req, res) => {
 
     let user = await User.findOne({ email: userEmail });
     
-    if (user && user.status === "inactive") {
+    if (user && user.status === "false") {
       return res.status(403).json({ message: "Admin Blocked Your Account" });
     }
 

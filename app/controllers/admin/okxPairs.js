@@ -7,13 +7,13 @@ const { getItems, checkQueryString } = require("../../middleware/db");
  */
 const getAllOkxPairs = async (req, res) => {
     try {
-        const query = await checkQueryString(req.query);
-        const status = req.query.status; // 'active' or 'inactive'
-        const type = req.query.type; // 'spot' or 'future'
+        const data = req.body || {};
+        const { status = 'true', type } = data;
+        const query = await checkQueryString(data);
 
-        if (status === 'active') query.status = true;
-        if (status === 'inactive') query.status = false;
-        
+        if (status === true || status === 'true') query.status = true;
+        if (status === false || status === 'false') query.status = false;
+
         if (type) query.type = type;
 
         res.status(200).json(await getItems(req, OkxPair, query));
@@ -27,11 +27,10 @@ const getAllOkxPairs = async (req, res) => {
  */
 const updateOkxPairStatus = async (req, res) => {
     try {
-        const { status, ids, all, type } = req.body;
-        const { id } = req.query;
+        const { status, ids, all, type, id } = req.body;
 
         // Determine the boolean status
-        const isActive = status === 'active' || status === true;
+        const isActive = status === true || status === 'true' || status === 'active';
 
         let query = {};
         let message = "";
