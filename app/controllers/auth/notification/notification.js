@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Notification = require("../../../models/notification");
 const P2POrder = require("../../../models/p2pOrder");
+const axios = require('axios')
 // const SpotOrder = require("../../../models/spotOrder");
 // const SupportTicket = require("../../../models/supportTicket");
 
@@ -84,58 +85,14 @@ exports.getNotifications = async (req, res) => {
             startDate,
             endDate,
         } = req.query;
-        const pageNumber = toPositiveInteger(page, 1);
-        const limitNumber = toPositiveInteger(limit, 20, 100);
-        const skip = (pageNumber - 1) * limitNumber;
-        const filter = getUserNotificationFilter(userId);
 
-        if (isRead === "true" || status === "read") {
-            filter.isRead = true;
-        } else if (isRead === "false" || status === "unread") {
-            filter.isRead = false;
-        }
+        console.log(page, limit, isRead, status, category, priority, startDate, endDate);
 
-        if (category) {
-            filter.category = category.toUpperCase();
-        }
-
-        if (priority) {
-            filter.priority = priority.toUpperCase();
-        }
-
-        if (startDate || endDate) {
-            filter.createdAt = {};
-
-            if (startDate) {
-                filter.createdAt.$gte = new Date(startDate);
-            }
-
-            if (endDate) {
-                filter.createdAt.$lte = new Date(endDate);
-            }
-        }
-
-        const [notifications, unreadCount, total] = await Promise.all([
-            Notification.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNumber).lean(),
-            Notification.countDocuments(getUserNotificationFilter(userId, { isRead: false })),
-            Notification.countDocuments(filter),
-        ]);
-
-        const normalizedNotifications = notifications.map(normalizeNotificationForClient);
-
+        var results = await axios.get(`${process.env.NOTIFICATION_URL}/notifications?userId=${userId}&page=${page}&limit=${limit}`)
         return res.json({
             success: true,
-            data: normalizedNotifications,
-            result: {
-                notifications: normalizedNotifications,
-                unreadCount,
-                pagination: {
-                    page: pageNumber,
-                    limit: limitNumber,
-                    total,
-                    totalPages: Math.ceil(total / limitNumber),
-                },
-            }
+            message: "Notifications fetched successfully",
+            result: results?.data ? results?.data : []
         });
 
     } catch (error) {
@@ -245,60 +202,73 @@ exports.markAsRead = async (req, res) => {
     try {
         const { id } = req.query;
 
-        // 🔹 CASE 1: No ID → Mark ALL
-        if (!id) {
-            await Notification.updateMany(
-                getUserNotificationFilter(req.user._id, { isRead: false }),
-                { isRead: true }
-            );
+        if (id) {
 
-            return res.json({
-                success: true,
-                message: "All notifications marked as read"
-            });
-        }
-
-        // 🔹 Split IDs
-        const idArray = id.split(",");
-
-        // 🔹 CASE 2: Single ID
-        if (idArray.length === 1) {
-            const singleId = idArray[0];
-
-            if (!mongoose.Types.ObjectId.isValid(singleId)) {
-                return res.status(400).json({ message: "Invalid notification id" });
-            }
-
-            const notification = await Notification.findOneAndUpdate(
-                { _id: singleId, ...getUserNotificationFilter(req.user._id) },
-                { isRead: true },
-                { new: true, lean: true }
-            );
-
-            if (!notification) {
-                return res.status(404).json({ message: "Notification not found" });
-            }
+            const clearNotificaton = await axios.patch(`${process.env.NOTIFICATION_URL}/notifications/${id}/read`, {
+                userId: req.user._id
+            })
 
             return res.json({
                 success: true,
                 message: "Notification marked as read",
-                result: normalizeNotificationForClient(notification)
+                result: clearNotificaton?.data ? clearNotificaton?.data : []
             });
         }
 
-        // 🔹 CASE 3: Multiple IDs (Selected)
-        const validIds = idArray
-            .filter(mongoose.Types.ObjectId.isValid)
-            .map((i) => new mongoose.Types.ObjectId(i));
+        // // 🔹 CASE 1: No ID → Mark ALL
+        // if (!id) {
+        //     await Notification.updateMany(
+        //         getUserNotificationFilter(req.user._id, { isRead: false }),
+        //         { isRead: true }
+        //     );
 
-        if (!validIds.length) {
-            return res.status(400).json({ message: "No valid IDs provided" });
-        }
+        //     return res.json({
+        //         success: true,
+        //         message: "All notifications marked as read"
+        //     });
+        // }
 
-        await Notification.updateMany(
-            { _id: { $in: validIds }, ...getUserNotificationFilter(req.user._id) },
-            { isRead: true }
-        );
+        // // 🔹 Split IDs
+        // const idArray = id.split(",");
+
+        // // 🔹 CASE 2: Single ID
+        // if (idArray.length === 1) {
+        //     const singleId = idArray[0];
+
+        //     if (!mongoose.Types.ObjectId.isValid(singleId)) {
+        //         return res.status(400).json({ message: "Invalid notification id" });
+        //     }
+
+        //     const notification = await Notification.findOneAndUpdate(
+        //         { _id: singleId, ...getUserNotificationFilter(req.user._id) },
+        //         { isRead: true },
+        //         { new: true, lean: true }
+        //     );
+
+        //     if (!notification) {
+        //         return res.status(404).json({ message: "Notification not found" });
+        //     }
+
+        //     return res.json({
+        //         success: true,
+        //         message: "Notification marked as read",
+        //         result: normalizeNotificationForClient(notification)
+        //     });
+        // }
+
+        // // 🔹 CASE 3: Multiple IDs (Selected)
+        // const validIds = idArray
+        //     .filter(mongoose.Types.ObjectId.isValid)
+        //     .map((i) => new mongoose.Types.ObjectId(i));
+
+        // if (!validIds.length) {
+        //     return res.status(400).json({ message: "No valid IDs provided" });
+        // }
+
+        // await Notification.updateMany(
+        //     { _id: { $in: validIds }, ...getUserNotificationFilter(req.user._id) },
+        //     { isRead: true }
+        // );
 
         return res.json({
             success: true,

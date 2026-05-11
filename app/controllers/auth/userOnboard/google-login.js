@@ -5,6 +5,7 @@ const User = require("../../../models/user");
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { handleError } = require("../../../middleware/utils");
+const { getChannel } = require('../../../helper/rabbitmq')
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -14,10 +15,10 @@ exports.googleLogin = async (req, res) => {
 
     const deviceName = req.body.deviceName || req.body.deviceType || req.headers['user-agent'] || "Unknown device";
     const deviceIPAddress =
-        (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',').shift().trim()) ||
-        req.socket?.remoteAddress ||
-        req.ip ||
-        null;
+      (req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',').shift().trim()) ||
+      req.socket?.remoteAddress ||
+      req.ip ||
+      null;
 
     let userEmail, userName, userGoogleId;
 
@@ -56,7 +57,7 @@ exports.googleLogin = async (req, res) => {
     }
 
     let user = await User.findOne({ email: userEmail });
-    
+
     if (user && user.status === "false") {
       return res.status(403).json({ message: "Admin Blocked Your Account" });
     }
@@ -82,37 +83,47 @@ exports.googleLogin = async (req, res) => {
       deviceIPAddress,
       deviceType: deviceName,
     };
+
+    console.log(user, "users")
     await user.save();
+
+    // var channel = await getChannel();
+    // var message = {
+    //   userId: user?._id?.toString(),
+    //   category: 'SECURITY',
+    //   eventType: 'LOGIN',
+    //   title: 'Login Alert',
+    //   message: `Your account was logged in successfully from ${deviceName}. IP address: ${deviceIPAddress}`,
+    //   referenceId: user?._id.toString(),
+    //   priority: 'MEDIUM',
+    //   data: {
+    //     username: userName,
+    //     email: userEmail,
+    //     deviceName: deviceName,
+    //     deviceIPAddress: deviceIPAddress,
+    //     loggedInAt: new Date().toISOString()
+    //   }
+    // }
+    // console.log(message, "messagesd")
+    // channel.sendToQueue('notification_queue', Buffer.from(JSON.stringify(message)), {
+    //   persistent: true
+    // })
 
     const checkedEmail = user.email;
     if (checkedEmail) {
-      sendOtpEmail({
-          checkedEmail,
-          username: user.name || user.username,
-          temp: "login_notification",
-          subject: "Login Alert",
-          deviceName,
-          deviceIPAddress,
-      }).catch((err) => {
-          console.error("Failed to send Google login notification email:", err.message);
-      });
+      // sendOtpEmail({
+      //   checkedEmail,
+      //   username: user.name || user.username,
+      //   temp: "login_notification",
+      //   subject: "Login Alert",
+      //   deviceName,
+      //   deviceIPAddress,
+      // }).catch((err) => {
+      //   console.error("Failed to send Google login notification email:", err.message);
+      // });
     } else {
       console.warn("Google login notification skipped: user has no email address");
     }
-    //       if (user.twoFAEnabled === true) {
-    //           const tempToken = jwt.sign(
-    //               { userId: user._id, twoFA: true },
-    //               process.env.JWT_ACCESS_SECRET,
-    //               { expiresIn: "5m" }
-    //           );
-
-    //           return res.status(200).json({
-    //               success: true,
-    //               twoFARequired: true,
-    //               tempToken,
-    //               message: "2FA required",
-    //           });
-    //       }
 
     const payload = { userId: user._id };
 
@@ -137,6 +148,7 @@ exports.googleLogin = async (req, res) => {
       message: "Google login successful"
     });
   } catch (error) {
+    console.log(error, "errorerror")
     handleError(res, error);
   }
 };

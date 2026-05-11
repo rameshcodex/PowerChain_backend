@@ -17,34 +17,34 @@ const initSocket = (httpServer) => {
   // Socket authentication middleware
   io.use(async (socket, next) => {
     try {
-      let token = socket.handshake.auth.token || 
-                  socket.handshake.headers.authorization || 
-                  socket.handshake.query.token;
-      
+      let token = socket.handshake.auth.token ||
+        socket.handshake.headers.authorization ||
+        socket.handshake.query.token;
+
       if (token && token.startsWith('Bearer ')) {
         token = token.split(' ')[1];
       }
 
       if (!token) {
-        console.warn(`[Socket Auth] No token provided for socket: ${socket.id}. Proceeding as unauthenticated.`);
+        // console.warn(`[Socket Auth] No token provided for socket: ${socket.id}. Proceeding as unauthenticated.`);
         return next();
       }
 
       const secret = process.env.JWT_ACCESS_SECRET;
-      console.log("🚀 ~ initSocket ~ secret:", secret)
+      // console.log("🚀 ~ initSocket ~ secret:", secret)
       const decoded = jwt.verify(token, secret);
-      console.log("🚀 ~ initSocket ~ decoded:", decoded)
+      // console.log("🚀 ~ initSocket ~ decoded:", decoded)
 
       // Extract userId from token
-      let account = await User.findById(decoded.userId).select("_id name email") || 
-                    await Admin.findById(decoded.userId).select("_id name email");
-      console.log("🚀 ~ initSocket ~ account:", account)
+      let account = await User.findById(decoded.userId).select("_id name email") ||
+        await Admin.findById(decoded.userId).select("_id name email");
+      // console.log("🚀 ~ initSocket ~ account:", account)
 
       if (account) {
         socket.user = account;
-        console.log(`[Socket Auth] Authenticated: ${account.name} (ID: ${account._id})`);
+        // console.log(`[Socket Auth] Authenticated: ${account.name} (ID: ${account._id})`);
       } else {
-        console.warn(`[Socket Auth] User not found for ID: ${decoded.userId}`);
+        // console.warn(`[Socket Auth] User not found for ID: ${decoded.userId}`);
       }
       next();
     } catch (err) {
@@ -57,23 +57,23 @@ const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     if (socket.user) {
       const userId = socket.user._id.toString();
-      console.log("🚀 ~ initSocket ~ userId:", userId)
+      // console.log("🚀 ~ initSocket ~ userId:", userId)
       const personalRoom = `user_${userId}`;
-      console.log("🚀 ~ initSocket ~ personalRoom:", personalRoom)
+      // console.log("🚀 ~ initSocket ~ personalRoom:", personalRoom)
 
       // Automatically join personal room for authenticated users
       socket.join(personalRoom);
-      console.log(`[Socket] Authenticated user ${userId} joined personal room: ${personalRoom}`);
+      // console.log(`[Socket] Authenticated user ${userId} joined personal room: ${personalRoom}`);
     } else {
-      console.log(`[Socket] Unauthenticated connection: ${socket.id}`);
+      // console.log(`[Socket] Unauthenticated connection: ${socket.id}`);
     }
 
     // Still allow manual joining for backward compatibility or public rooms
     socket.on("join_user", ({ userId }) => {
-        if (!userId) return;
-        const roomName = `user_${userId.toString()}`;
-        socket.join(roomName);
-        console.log(`[Socket] Manual room join: ${roomName}`);
+      if (!userId) return;
+      const roomName = `user_${userId.toString()}`;
+      socket.join(roomName);
+      // console.log(`[Socket] Manual room join: ${roomName}`);
     });
 
 
@@ -82,7 +82,7 @@ const initSocket = (httpServer) => {
       if (support_id) {
         const roomName = support_id.toString();
         socket.join(roomName);
-        console.log(`[Support Socket] User ${userId} joined room: ${roomName}`);
+        // console.log(`[Support Socket] User ${userId} joined room: ${roomName}`);
       }
     });
 
@@ -94,7 +94,7 @@ const initSocket = (httpServer) => {
 
         const roomName = support_id.toString();
         const ticket = await Ticket.findById(support_id);
-        
+
         if (ticket) {
           const newMessage = {
             from: message.from || (socket.user instanceof Admin ? "admin" : "user"),
@@ -105,7 +105,7 @@ const initSocket = (httpServer) => {
           await ticket.save();
 
           const savedMessage = ticket.messages[ticket.messages.length - 1];
-          
+
           io.to(roomName).emit("receive_support_message", {
             support_id: roomName,
             message: savedMessage

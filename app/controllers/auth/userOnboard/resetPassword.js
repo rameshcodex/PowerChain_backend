@@ -5,6 +5,7 @@ const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
 const { sendNotification } = require("../../../utils/notificationHelper");
 const { logger } = require("../../../../winston");
 const { handleError } = require("../../../middleware/utils");
+const { getChannel } = require('../../../helper/rabbitmq')
 
 const resetPassword = async (req, res) => {
     try {
@@ -67,13 +68,32 @@ const resetPassword = async (req, res) => {
 
         const Title = "Password Changed";
         const message = `Your password has been changed successfully.`;
-        await sendNotification({
-            userId: user._id,
-            type: "user",
-            event: "password_changed",
+        // await sendNotification({
+        //     userId: user._id,
+        //     type: "user",
+        //     event: "password_changed",
+        //     title: Title,
+        //     message: message,
+        // });
+        var messages = {
+            userId: userId?.toString(),
+            category: 'SECURITY',
+            eventType: 'CHANGE_PASSWORD',
             title: Title,
-            message: message,
-        });
+            message: `Your password Has Been Updated successfully from ${deviceName}. IP address: ${deviceIPAddress}`,
+            referenceId: userId.toString(),
+            priority: 'MEDIUM',
+            data: {
+                deviceName: deviceName,
+                deviceIPAddress: deviceIPAddress,
+                loggedInAt: new Date().toISOString()
+            }
+        }
+        // var channel = await getChannel()
+        // channel.sendToQueue('notification_queue', Buffer.from(JSON.stringify(messages)), {
+        //     persistent: true
+        // })
+
         logger.notification(`Sending notification to user ${user._id}: ${Title} - ${message}`);
 
         sendOtpEmail({
@@ -93,6 +113,7 @@ const resetPassword = async (req, res) => {
             message: "Password updated successfully"
         });
     } catch (error) {
+        console.log(error, "error")
         handleError(res, error);
     }
 };

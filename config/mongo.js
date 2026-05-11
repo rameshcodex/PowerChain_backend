@@ -5,8 +5,18 @@ const loadModel = require('../app/models')
 module.exports = () => {
     const connect = async () => {
         try {
-            console.log("khikhiohioh")
-            await mongoose.connect(DB_URL)
+            await mongoose.connect(DB_URL,
+                {
+                    maxPoolSize: 50,
+                    minPoolSize: 10,
+                    maxIdleTimeMS: 60000,
+                    serverSelectionTimeoutMS: 5000,
+                    socketTimeoutMS: 45000,
+                    connectTimeoutMS: 10000,
+                    retryWrites: true,
+                    retryReads: true,
+                }
+            )
 
             if (process.env.NODE_ENV !== 'dev') {
                 console.log("****************************")

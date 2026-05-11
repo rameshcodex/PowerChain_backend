@@ -12,8 +12,8 @@ const i18n = require('i18n');
 const mongoose = require('mongoose');
 const initMongo = require('./config/mongo')
 const router = require('./app/routes/auth');
-const binanceRoute = require('./app/routes/tradeRoutes');
-const okxRoutes = require('./app/routes/OKX');
+const binanceRoute = require('./app/routes/binance');
+const okxRoutes = require('./app/routes/okx');
 const adminRoutes = require('./app/routes/admin');
 const { log } = require('console');
 // const passport = require("./config/passport")
@@ -21,21 +21,10 @@ const session = require("express-session")
 const crypto = require('crypto');
 const { initSocket } = require('./app/controllers/Ticket/socket/TicketMessSocket');
 const { setupP2PSocket } = require('./app/controllers/auth/p2p/socket/p2pSocketHandler');
-const { startNotificationConsumer } = require('./app/helper/rabbitmq');
-// const { startDailyKycReminderJob } = require('./app/utils/kycNotificationService');
-
-
+const { encryptPayload, decryptPayload } = require('./app/middleware/payloadEncrypt')
+const { connectToRabbitMQ, getChannel } = require('./app/helper/rabbitmq')
 
 require('./config/googleStrategy')
-
-
-// app.set('port', process.env.PORT || 3000)
-
-// if (process.env.NODE_ENV === 'test') {
-//     app.use(morgan('dev'))
-// }
-
-
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -72,7 +61,7 @@ app.use(bodyparser.urlencoded(
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://8fvfkzzv-3001.inc1.devtunnels.ms"
+    "https://optiontrade.net"
 ];
 
 i18n.configure({
@@ -105,6 +94,53 @@ process.on('unhandledRejection', (reason, promise) => {
     console.log(promise);
 });
 
+
+// // Middle Ware to decrypt payload
+// app.use((req, res, next) => {
+//     try {
+//         // decrypt payload
+//         if (req.body) {
+//             const decryptedData = decryptPayload(req.body.data)
+
+//             // store decrypted data in req.body
+//             req.body = decryptedData;
+//         }
+//         next();
+//     } catch (error) {
+//         return res.status(400).json({
+//             success: false,
+//             message: "Request decryption failed",
+//         });
+//     }
+// })
+
+// // Middle Ware to encrypt payload
+// app.use((req, res, next) => {
+//     // store original res.json
+//     const originalJson = res.json.bind(res);
+
+//     // override res.json
+//     res.json = (payload) => {
+//         try {
+//             // encrypt payload
+//             const encryptedData = encryptPayload(payload)
+
+//             // send encrypted response
+//             return originalJson({
+//                 data: encryptedData,
+//             });
+
+//         } catch (error) {
+//             return originalJson({
+//                 success: false,
+//                 message: "Response encryption failed",
+//             });
+//         }
+//     };
+
+//     next();
+// });
+
 app.use(compression())
 // Configure Helmet to allow cross-origin images
 
@@ -129,18 +165,10 @@ app.use(
         },
     })
 );
-app.use("/api/auth", require("./app/routes/googleAuth"));
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
-
 
 //  STATIC FILES
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-app.use("/api", router);
-app.use("/api/binance", binanceRoute);
-app.use("/api/okx", okxRoutes);
-app.use("/api/admin", adminRoutes);
+app.use(require("./app/routes"));
 
 app.use(express.static(path.join(__dirname, 'views')))
 app.engine('html', require('ejs').renderFile)
@@ -152,10 +180,12 @@ httpServer.listen(port, () => {
     log(`Socket.IO initialized`)
 })
 initMongo();
+// connectToRabbitMQ();
+
 mongoose.connection.once('open', () => {
-    startNotificationConsumer().catch((error) => {
-        console.error('Failed to start RabbitMQ notification consumer:', error.message);
-    });
+    // startNotificationConsumer().catch((error) => {
+    //     console.error('Failed to start RabbitMQ notification consumer:', error.message);
+    // });
 });
 // startDailyKycReminderJob();
 module.exports = app

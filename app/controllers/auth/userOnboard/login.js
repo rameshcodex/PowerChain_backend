@@ -4,7 +4,7 @@ const { matchedData } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const { sendOtpEmail } = require("../helpers.js/sendOtpEmail");
-const { publishLoginNotification } = require("../../../helper/rabbitmq");
+// const { publishLoginNotification } = require("../../../helper/rabbitmq");
 // const { schedulePostLoginKycReminder } = require("../../../utils/kycNotificationService");
 
 const unVerifiedUsers = require("../../../models/unVerifiedUsers");
@@ -172,15 +172,15 @@ const login = async (req, res) => {
         //     console.warn("Login notification skipped: user has no email address");
         // }
 
-        publishLoginNotification({
-            userId: user._id,
-            username: user.name || user.username,
-            email: user.email,
-            deviceName,
-            deviceIPAddress,
-        }).catch((err) => {
-            console.error("Failed to create login notification:", err.message);
-        });
+        // publishLoginNotification({
+        //     userId: user._id,
+        //     username: user.name || user.username,
+        //     email: user.email,
+        //     deviceName,
+        //     deviceIPAddress,
+        // }).catch((err) => {
+        //     console.error("Failed to create login notification:", err.message);
+        // });
 
         // 2FA CHECK
         if (user.twoFAEnabled === true) {
