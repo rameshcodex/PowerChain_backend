@@ -10,7 +10,7 @@ const { removeExtensionFromFile } = require('../middleware/utils')
  */
 
 // Load Auth route
-router.use('/api', require('./auth'))
+router.use('/powerchainapi', require('./auth'))
 
 // Loop routes path and loads every file as a route except this file and Auth route
 fs.readdirSync(routesPath).filter((file) => {
@@ -19,7 +19,7 @@ fs.readdirSync(routesPath).filter((file) => {
 
     // Prevents loading of this file and auth file
     return routeFile !== 'index' && routeFile !== 'auth' && file !== '.DS_Store'
-        ? router.use(`/api/${routeFile}`, require(`./${routeFile}`))
+        ? router.use(`/powerchainapi/${routeFile}`, require(`./${routeFile}`))
         : ''
 })
 
