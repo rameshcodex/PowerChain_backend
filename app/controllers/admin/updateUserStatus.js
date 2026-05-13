@@ -9,22 +9,46 @@ const { handleError } = require("../../middleware/utils");
  */
 const updateUserStatus = async (req, res) => {
     try {
-        const { id } = req.query;
-        const { status } = req.body;
+        const { id } = req.body;
 
-        if (!['active', 'inactive'].includes(status)) {
-            return res.status(400).json({
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({
                 success: false,
-                message: "Invalid status. Must be 'active' or 'inactive'."
+                message: "User not found"
             });
         }
-
-        const user = await updateItem(id, User, { status });
+        user.status = !user.status;
+        await user.save();
 
         res.status(200).json({
             success: true,
             result: user,
-            message: `User status updated to ${status} successfully`
+            message: `User status updated to ${user.status} successfully`
+        });
+    } catch (error) {
+        handleError(res, error);
+    }
+}
+
+const updateUserTradeStatus = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const { tradeStatus } = req.body;
+
+        if (![true, false].includes(tradeStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid status. Must be true or false."
+            });
+        }
+
+        const user = await updateItem(id, User, { tradeStatus });
+
+        res.status(200).json({
+            success: true,
+            result: user,
+            message: `User trade status updated to ${tradeStatus} successfully`
         });
     } catch (error) {
         handleError(res, error);
@@ -32,5 +56,6 @@ const updateUserStatus = async (req, res) => {
 }
 
 module.exports = {
-    updateUserStatus
+    updateUserStatus,
+    updateUserTradeStatus
 }

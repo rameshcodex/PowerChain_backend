@@ -15,8 +15,9 @@ const getAllOkxPairs = async (req, res) => {
         if (status === false || status === 'false') query.status = false;
 
         if (type) query.type = type;
+        const pairs = await getItems(req, OkxPair, query);
 
-        res.status(200).json(await getItems(req, OkxPair, query));
+        res.status(200).json({ success: true, result: pairs, message: "Pairs fetched successfully." });
     } catch (error) {
         handleError(res, error);
     }

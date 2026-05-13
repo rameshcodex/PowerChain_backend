@@ -158,13 +158,6 @@ router.post(
     submitKYC
 );
 
-router.post(
-    "/admin/kyc/:kycId/status",
-    tokenValidator,
-    roleAuthorization(['admin', 'subadmin']),
-    updateKYCStatus
-);
-
 
 
 

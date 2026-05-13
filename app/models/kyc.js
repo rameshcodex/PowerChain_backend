@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const kycSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -75,6 +76,7 @@ const kycSchema = new mongoose.Schema({
 
 });
 
+kycSchema.plugin(mongoosePaginate);
 const KYC = mongoose.model('KYC', kycSchema);
 
 module.exports = KYC;

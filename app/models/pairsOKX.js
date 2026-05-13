@@ -86,7 +86,14 @@ const pairsOKX = new mongoose.Schema(
             type: Number,
             default: 0,
         },
-
+        buyCommission: {
+            type: Number,
+            default: 0,
+        },
+        sellCommission: {
+            type: Number,
+            default: 0,
+        },
         exchange: {
             type: [String],
             default: ["OKX"],

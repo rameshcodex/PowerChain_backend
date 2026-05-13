@@ -26,7 +26,7 @@ const setUpTwoFA = async (req, res) => {
     }
 
     let base32Secret;
-    const issuer = "DemoExchange";
+    const issuer = "Power Chain";
     const label = `${issuer}:${user.email}`;
 
     if (user.twoFASecret && user.twoFAEnabled === false) {
