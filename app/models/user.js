@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
     role: { type: String, default: "user" },
     status: { type: Boolean, default: true, index: true },
     isDeleted: { type: Boolean, default: false, index: true },
+    tradeStatus: { type: Boolean, default: true, index: true },
 
     deviceDetails: {
         deviceIPAddress: String,

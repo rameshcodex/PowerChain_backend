@@ -1,7 +1,6 @@
 const { register } = require("./register");
 const { submitKYC } = require("./submitKYC");
 const { getKYC } = require("./getKYC");
-const { updateKYCStatus } = require("./updateKYCStatus");
 const { login } = require("./login");
 const { profileimageUploader } = require("./profileImageUploader");
 const { refreshToken } = require("./refreshToken");
@@ -14,13 +13,8 @@ module.exports = {
     register,
     submitKYC,
     getKYC,
-    updateKYCStatus,
     login,
     profileimageUploader,
     refreshToken, resetpassword,
     resendOTP,
-    getKYC,
-    // updateKYCStatus
-
-
 };

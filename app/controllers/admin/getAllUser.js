@@ -8,13 +8,13 @@ const { handleError } = require("../../middleware/utils");
 const getAllUsers = async (req, res) => {
     try {
         const query = await checkQueryString(req.query);
-        const status = req.query.status || "";
-
-        // query.isDeleted = { $ne: true };
+        const { status, search } = req.query;
 
         if (status) query.status = status;
+        if (search) query.$or = [{ name: { $regex: search, $options: "i" } }, { email: { $regex: search, $options: "i" } }, { phone: { $regex: search, $options: "i" } }];
+        const users = await getItems(req, User, query)
 
-        res.status(200).json(await getItems(req, User, query));
+        res.status(200).json({ success: true, result: users, message: "Users fetched successfully" });
     } catch (error) {
         handleError(res, error);
     }

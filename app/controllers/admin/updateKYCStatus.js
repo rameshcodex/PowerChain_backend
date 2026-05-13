@@ -1,7 +1,7 @@
-const KYC = require("../../../models/kyc");
-const User = require("../../../models/user");
-const { sendNotification } = require("../../../utils/notificationHelper");
-const { notifyKycStatusChanged } = require("../../../utils/kycNotificationService");
+const KYC = require("../../models/kyc");
+const User = require("../../models/user");
+const { sendNotification } = require("../../utils/notificationHelper");
+const { notifyKycStatusChanged } = require("../../utils/kycNotificationService");
 
 const updateKYCStatus = async (req, res) => {
     try {

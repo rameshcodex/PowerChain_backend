@@ -33,7 +33,7 @@ const adminLogin = async (req, res) => {
         }
 
         const admin = await Admin.findOne({ email }).select(" +password -__v");
-        console.log(admin)
+
         if (!admin) {
             return res.status(404).json({
                 success: false,
@@ -58,7 +58,21 @@ const adminLogin = async (req, res) => {
             });
         }
 
-        const payload = { userId: admin._id, role: admin.role };
+        if (admin.twoFAEnabled) {
+            return res.status(200).json({
+                success: true,
+                result: {
+                    twoFactorRequired: true
+                },
+                message: "Admin 2FA is enabled"
+            });
+        }
+
+        const basePermissions = ["Profile"];
+
+        const permissions = admin.role === "subadmin" ? [...basePermissions, ...admin.permissions] || basePermissions : ["ALL"];
+
+        const payload = { userId: admin._id, permissions, role: admin.role };
 
         // const accessToken = jwt.sign(
         //     payload,
@@ -68,8 +82,8 @@ const adminLogin = async (req, res) => {
         const accessToken = jwt.sign(
             payload,
             process.env.JWT_ACCESS_SECRET,
-            { expiresIn:  '1d' }
-        );  
+            { expiresIn: '1d' }
+        );
 
         const refreshToken = jwt.sign(
             payload,
@@ -85,7 +99,8 @@ const adminLogin = async (req, res) => {
             result: {
                 admin: adminData,
                 accessToken,
-                refreshToken
+                refreshToken,
+                permissions,
             },
             message: "Admin logged in successfully"
         });
